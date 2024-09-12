@@ -193,50 +193,7 @@ class board():
             self.floodFill(x,(y+1),targetCounter,replacmentCounter) # go up
         if y != 0:
             self.floodFill(x,(y-1),targetCounter,replacmentCounter) # go down
-           
-class group():
-    def __init__(self,board,position,length):
-        self.board = board
-        self.position = position
-        self.length = length
-        self.alive = False
-        
-    # group detection algorithm to check if a group is alive
-    # based on the flood fill algorithm.
-    # a single counter in a group is only dead if
-    # it has no free adjacent tiles.
-    # a group is only dead if all the tiles in it are dead.
-    def checkIfGroupAlive(self,x, y, targetCounter, replacmentCounter):
-        currentValue = self.board[(x+(y*self.length))].center.value
-        if currentValue != targetCounter or self.alive:
-            return
-        
-        self.board[(x+(y*self.length))].center.value = replacmentCounter
-        
-        surounds = self.board[(x+(y*self.length))].getSurounds(self.board)
-        if BLANK in surounds:
-            self.alive = True
-        if (x+1) < self.length:
-            self.checkIfGroupAlive((x+1),y,targetCounter,replacmentCounter) # go right
-        if x != 0:    
-            self.checkIfGroupAlive((x-1),y,targetCounter,replacmentCounter) # go left
-        if (y+1) < self.length:
-            self.checkIfGroupAlive(x,(y+1),targetCounter,replacmentCounter) # go up
-        if y != 0:
-            self.checkIfGroupAlive(x,(y-1),targetCounter,replacmentCounter) # go down
 
-class counter():
-    def __init__(self):
-        self.value = BLANK
-    
-    def invert(self):
-        if self.value == "x":
-            return "o"
-        elif self.value == "o":
-            return "x"
-        else:
-            return -1
-        
 class tile():
     def __init__(self):
         self.center  = counter()
@@ -302,13 +259,57 @@ class tile():
         except:
             pass
         return False
+      
+class counter():
+    def __init__(self):
+        self.value = BLANK
+    
+    def invert(self):
+        if self.value == "x":
+            return "o"
+        elif self.value == "o":
+            return "x"
+        else:
+            return -1
+  
+class group():
+    def __init__(self,board,position,length):
+        self.board = board
+        self.position = position
+        self.length = length
+        self.alive = False
         
+    # group detection algorithm to check if a group is alive
+    # based on the flood fill algorithm.
+    # a single counter in a group is only dead if
+    # it has no free adjacent tiles.
+    # a group is only dead if all the tiles in it are dead.
+    def checkIfGroupAlive(self,x, y, targetCounter, replacmentCounter):
+        currentValue = self.board[(x+(y*self.length))].center.value
+        if currentValue != targetCounter or self.alive:
+            return
+        
+        self.board[(x+(y*self.length))].center.value = replacmentCounter
+        
+        surounds = self.board[(x+(y*self.length))].getSurounds(self.board)
+        if BLANK in surounds:
+            self.alive = True
+        if (x+1) < self.length:
+            self.checkIfGroupAlive((x+1),y,targetCounter,replacmentCounter) # go right
+        if x != 0:    
+            self.checkIfGroupAlive((x-1),y,targetCounter,replacmentCounter) # go left
+        if (y+1) < self.length:
+            self.checkIfGroupAlive(x,(y+1),targetCounter,replacmentCounter) # go up
+        if y != 0:
+            self.checkIfGroupAlive(x,(y-1),targetCounter,replacmentCounter) # go down
+
 # blank
 class AI():
     def __init__(self):
         pass
         # blank ???
-        
+
+
 class game():
     def __init__(self):
         self.__main()
@@ -418,7 +419,5 @@ def getValidInt(mini,maxi,message, exceptions = []):
         else:
             return int(num)
 
-
-        
 if __name__ == "__main__":
     main = game()
