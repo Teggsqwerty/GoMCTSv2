@@ -12,16 +12,16 @@ class counter():
         
 class fileHandler():
     def __init__(self,isSgf):
-        self.isSgf = isSgf
+        self.__isSgf = isSgf
 
     def saveData(self,data,filename):
-        if self.isSgf:
+        if self.__isSgf:
             print("no save sgf method YET")
         else:
             self.__saveDataTxt(data,filename)
 
     def readData(self,filename):
-        if self.isSgf:
+        if self.__isSgf:
             data = self.__readSGF(filename)
         else:
             data = self.__readTxt(filename)
