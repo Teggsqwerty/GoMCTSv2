@@ -2,6 +2,12 @@ class counter():
     def __init__(self):
         self.value = ""
     
+    def setValue(self, value):
+        self.value = value
+    
+    def getValue(self):
+        return self.value
+    
     def invert(self):
         if self.value == "x":
             return "o"
@@ -16,7 +22,7 @@ class fileHandler():
 
     def saveData(self,data,filename):
         if self.__isSgf:
-            print("no save sgf method YET")
+            self.__saveDataSgf(data,filename)
         else:
             self.__saveDataTxt(data,filename)
 
@@ -26,6 +32,22 @@ class fileHandler():
         else:
             data = self.__readTxt(filename)
         return data
+    
+    def __saveDataSgf(self, data, filename):
+        player = counter()
+        player.setValue("x")
+        rawData = "(;\n"
+        for turn in data:
+            if player.getValue() == "x":
+                rawData += ";B["
+            else:
+                rawData += ";W["
+            rawData += chr(97+ord(turn[0])) + chr(97+ord(turn[1])) + "]"
+            player.value = player.invert()
+        rawData += ")\n"
+        fin = open(filename,"w")
+        fin.write(rawData)
+        fin.close()
     
     def __saveDataTxt(self, data, filename):
         player = counter()
