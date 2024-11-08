@@ -1,4 +1,4 @@
-class counter():
+class stone():
     def __init__(self):
         self.value = ""
     
@@ -17,24 +17,32 @@ class counter():
             return -1
         
 class fileHandler():
-    def __init__(self,isSgf):
+    def __init__(self):
+        self.__isSgf = True
+
+    def setFileType(self,isSgf):
         self.__isSgf = isSgf
 
     def saveData(self,data,filename):
         if self.__isSgf:
-            self.__saveDataSgf(data,filename)
+            self.__saveDataSgf(data,(filename + ".sgf"))
         else:
-            self.__saveDataTxt(data,filename)
+            self.__saveDataTxt(data,(filename + ".txt"))
 
     def readData(self,filename):
-        if self.__isSgf:
-            data = self.__readSGF(filename)
-        else:
-            data = self.__readTxt(filename)
-        return data
+        try:
+            if self.__isSgf:
+                data = self.__readSGF(filename + ".sgf")
+            else:
+                data = self.__readTxt(filename + ".txt")
+            error = ""
+        except:
+            data = []
+            error = "error loading file"
+        return data, error
     
     def __saveDataSgf(self, data, filename):
-        player = counter()
+        player = stone()
         player.setValue("x")
         rawData = "(;\n"
         for turn in data:
@@ -43,19 +51,19 @@ class fileHandler():
             else:
                 rawData += ";W["
             rawData += chr(97+ord(turn[0])) + chr(97+ord(turn[1])) + "]"
-            player.value = player.invert()
+            player.setValue(player.invert())
         rawData += ")\n"
         fin = open(filename,"w")
         fin.write(rawData)
         fin.close()
     
     def __saveDataTxt(self, data, filename):
-        player = counter()
+        player = stone()
         player.value = "x"
         rawData = ""
         for turn in data:
             rawData += (str(turn[0]) + "," + str(turn[1]) + "," + player.value + "\n")
-            player.value = player.invert()
+            player.setValue(player.invert())
         fin = open(filename,"w")
         fin.write(rawData)
         fin.close()
@@ -115,3 +123,6 @@ class fileHandler():
                 semiCount += 1
             count += 1
         return count
+
+if __name__ == "__main__":
+    test = fileHandler()
