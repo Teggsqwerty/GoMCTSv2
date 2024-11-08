@@ -1,5 +1,5 @@
 import numpy as np
-import fileHandling as FH
+import fileHandlingV1 as FH
 BLANK = ""
 
 class board():
@@ -9,19 +9,30 @@ class board():
     # DO NOT edit blank copy, this is used to hopefully speed up the group detection algorithm
     # group detection is for use with the group detection algorithm, it will be reset by copying
     # blankCopy into it
-    def __init__(self,length):
-        self.length = length
-        self.size = length * length
-        self.board = self.createBlankBoard()
+    def __init__(self):
+        self.length = 9
+        self.size = self.length * self.length
+        self.board = 0
+        self.resetBoard()
         self.blankCopy = np.copy(self.board)
         self.groupDetection = np.copy(self.board)
-        
-    def createBlankBoard(self):
-        blank = np.empty(self.size, object)
+    
+    def setLength(self,length):
+        self.length = length
+
+    def getLength(self):
+        return self.length
+    
+    def playTurn(self, x, y, player):
+        index = (y*self.length) + x
+        self.editTile(index,player.getValue())
+        self.removeDeadTiles(player.invert())
+
+    def resetBoard(self):
+        self.board = np.empty(self.size, object)
         for index in range(self.size):
-            blank[index] = tile()
-        self.initPointer(blank)
-        return blank
+            self.board[index] = tile()
+        self.initPointer(self.board)
         
     def initPointer(self,blank):
         for index in range(self.size):
@@ -100,32 +111,7 @@ class board():
         print("\n\n")
         
     def editTile(self,position,char):
-        #print(position)
         self.board[position].center.value = char
-        #print(self.board[position].center.invert())
-        
-    def editBoard(self,char):
-        valid = False
-        while not(valid):
-            y = getValidInt(1,self.length,"enter M for menu or\nenter x: ",["M"]) 
-            if y != "M":
-                OY = y
-                y -= 1
-                x = getValidInt(1,self.length,"enter y: ") 
-                OX = x
-                x = self.length - x
-                print()
-                index = (x*self.length) + y
-                valid = self.checkValidMove(index)
-                if not(valid):
-                    print("must not already contain a counter")
-                else:
-                    self.editTile(index,char)
-            else:
-                valid = True
-                OY = y
-                OX = 0
-        return OX, OY
     
     # remove dead tiles beloning to player "player"
     def removeDeadTiles(self,player):
@@ -133,7 +119,6 @@ class board():
             isGroup = self.checkIfGroup(position,player)
             if isGroup and self.board[position].center.value == player:
                 self.removeDeadGroup(player,position)
-                #pass
             elif self.board[position].center.value == player:
                 self.removeDeadTile(position)
        
@@ -160,9 +145,18 @@ class board():
         # must be improved for use with the AI
         if self.board[position].center.value != BLANK:
             return False
+        elif self.__checkKo():
+            return False
         return True
     
-    def scoreBoard(self):
+    def __checkKo(self):
+        return False
+        """
+        if the last go removed one of your stones 
+        then you are not allowd to play where your stone was removed from on the next move
+        """
+    
+    def getScore(self,player):
         xScore = 0
         oScore = 0
         for tiles in self.board:
@@ -174,7 +168,10 @@ class board():
                     xScore += 1
                 elif xCount < oCount:
                     oScore += 1
-        return xScore,oScore
+        if player == "x":
+            return xScore - oScore
+        else:
+            return oScore - xScore
         
     # found this pseudocode on freeCodeCamp (basicaly c++ not pseudocode)
     # it was fairly bad so this is it improved (i hope)
@@ -196,7 +193,7 @@ class board():
 
 class tile():
     def __init__(self):
-        self.center  = counter()
+        self.center  = stone()
         self.right  = 0
         self.left   = 0
         self.top    = 0
@@ -260,9 +257,15 @@ class tile():
             pass
         return False
       
-class counter():
+class stone():
     def __init__(self):
         self.value = BLANK
+    
+    def setValue(self, value):
+        self.value = value
+    
+    def getValue(self):
+        return self.value
     
     def invert(self):
         if self.value == "x":
@@ -312,7 +315,10 @@ class AI():
 
 class game():
     def __init__(self):
-        self.__main()
+        self.__mainBoard = board()
+        self.__player = stone()
+        self.__file = FH.fileHandler()
+        
             
     def __printMenu(self):
         print("\n===================")
@@ -323,46 +329,62 @@ class game():
         print("===================\n")
         print("enter your Choice: ", end = "")
 
-    def __playGame(self, boardWidth):
-        mainBoard = board(boardWidth)
-        player = counter()
-        file = FH.fileHandler(False)
-        player.value = "x"
+    def __getValidMove(self):
+        length = self.__mainBoard.getLength()
+        valid = False
+        while not(valid):
+            x = getValidInt(1,length,"enter M for menu or\nenter x: ",["M"]) 
+            if x != "M":
+                x -= 1
+                y = getValidInt(1,length,"enter y: ") 
+                y = length - y
+                print()
+                index = (y*length) + x
+                valid = self.__mainBoard.checkValidMove(index)
+                if not(valid):
+                    print("must be a valid move!")
+                else:
+                    return x,y
+            else:
+                return x,0
+        
+    def __playGameTxt(self, boardWidth):
+        self.__player.setValue("x")
+        self.__mainBoard.setLength(boardWidth)
+        self.__mainBoard.resetBoard()
         won = False
         turnCounter = 0
         data = []
         while not(won):
-            print(f"it is player {player.value}'s turn.\n")
-            mainBoard.printBoard()
-            print(mainBoard.scoreBoard())
-            x,y = mainBoard.editBoard(player.value)
-            while y == "M":
-                if y == "M":
+            self.__mainBoard.printBoard()
+            print("current score is " + str(self.__mainBoard.getScore(self.__player)))
+            print(f"it is player {self.__player.getValue()}'s turn.\n")
+            x = "M"
+            while x == "M":
+                x,y = self.__getValidMove()
+                if x == "M":
                     self.__printMenu()
                     Choice = input()
                     if Choice == "S":
                         filename = input("enter save game name: ")
-                        filename += ".txt"
-                        file.saveData(data,filename)
-                    elif Choice == "Q":
+                        self.__file.saveData(data,filename)
+                    elif Choice == "Q": # hello world
                         won = True
-                        y = 0
+                        x == -1
                     elif Choice == "P":
                         print(data)
-                if not(won):
-                    x,y = mainBoard.editBoard(player.value)
-            player.value = player.invert()
-            mainBoard.removeDeadTiles(player.value)
-            mainBoard.removeDeadTiles(player.invert())
-            turnCounter += 1
-            data.append([x,y])
+            if x != -1:
+                self.__mainBoard.playTurn(x,y,self.__player)
+                turnCounter += 1
+                data.append([x,y])
+                self.__player.setValue(self.__player.invert())
 
 
     def __playExampleGame(self, filename, sgf, length):
         file = FH.fileHandler(sgf)
         data = file.readData(filename)
         mainBoard = board(length)
-        player = counter()
+        player = stone()
         player.value = "x"
         print(data)
         for turn in data:
@@ -386,13 +408,13 @@ class game():
             print("==============================\n")
             return getValidInt(1,3,"enter your choice: ",[9])
     
-    def __main(self):
+    def main(self):
         playing = True
         while playing:
             mainChoice = self.__getMainMenuChoice()
             if mainChoice == 1:
                 boardSize = getValidInt(1,19,"Enter the board size (1,19): ")
-                self.__playGame(boardSize)
+                self.__playGameTxt(boardSize)
             elif mainChoice in [2,3]:
                 boardSize = getValidInt(1,19,"Enter the board size for the file(1,19): ")
                 invalid = True
@@ -421,3 +443,4 @@ def getValidInt(mini,maxi,message, exceptions = []):
 
 if __name__ == "__main__":
     main = game()
+    main.main()
