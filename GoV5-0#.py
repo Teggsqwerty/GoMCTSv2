@@ -13,7 +13,16 @@ class board():
         self.length = 9
         self.size = self.length * self.length
         self.board = 0
+
+        self.xLoses = 0
+        self.oLoses = 0
+
+        self.noLastDeadStones = -1
+        self.lastRemovedStoneLocation = -1 # index position rather than cartesian
+
         self.resetBoard()
+
+        # only needed if the dead stone removal algorithm is ever imporved
         self.blankCopy = np.copy(self.board)
         self.groupDetection = np.copy(self.board)
     
@@ -33,7 +42,12 @@ class board():
         for index in range(self.size):
             self.board[index] = tile()
         self.initPointer(self.board)
-        
+
+        self.xLoses = 0
+        self.oLoses = 0
+        self.noLastDeadStones = -1
+        self.lastRemovedStoneLocation = -1
+
     def initPointer(self,blank):
         for index in range(self.size):
             y,x = divmod(index,self.length)
@@ -113,24 +127,30 @@ class board():
     def editTile(self,position,char):
         self.board[position].center.value = char
     
-    # remove dead tiles beloning to player "player"
-    def removeDeadTiles(self,player):
-        for position in range(self.size):
-            isGroup = self.checkIfGroup(position,player)
-            if isGroup and self.board[position].center.value == player:
-                self.removeDeadGroup(player,position)
-            elif self.board[position].center.value == player:
-                self.removeDeadTile(position)
+    # remove dead tiles beloning to "player" surounding "location"
+    def removeDeadTiles(self,player,location):
+        deadStones = 0 
+        tiles = self.board[location].getSuroundLocations()
+        tiles += (location,)
+        for position in tiles:
+            if self.board[position].center.value == player:
+                isGroup = self.checkIfGroup(position,player)
+                if isGroup:
+                    self.removeDeadGroup(player,position)
+                else:
+                    deadStones = self.removeDeadTile(position)
+                    
        
     def checkIfGroup(self,position,player):
-        surounds = self.board[position].getSurounds(self.board)
-        if player in surounds:
+        if player in self.board[position].getSurounds(self.board):
             return True
         return False
     
     def removeDeadTile(self,position):
         if not(self.board[position].isAlive(self.board)):
             self.editTile(position,BLANK)
+            return 1
+        return 0
     
     def removeDeadGroup(self,player,position):
         y,x = divmod(position,self.length)
@@ -145,15 +165,17 @@ class board():
         # must be improved for use with the AI
         if self.board[position].center.value != BLANK:
             return False
-        elif self.__checkKo():
+        elif self.__checkKo(position):
             return False
         return True
     
-    def __checkKo(self):
+    def __checkKo(self, position):
+        if self.noLastRemovedStones == 1 and position == self.lastRemovedStoneLocation:
+            return True
         return False
         """
         if the last go removed one of your stones 
-        then you are not allowd to play where your stone was removed from on the next move
+        then you are not allowed to play where your stone was removed from on the next move
         """
     
     def getScore(self,player):
@@ -198,32 +220,47 @@ class tile():
         self.left   = 0
         self.top    = 0
         self.bottom = 0
-           
+        
+    def getRightLocation(self):
+        return self.right
+
     def getRight(self,board):
         if self.right == "f":
             return self.center.invert()
         else:
             return board[self.right].center.value
     
+    def getTopLocation(self):
+        return self.Top
+
     def getTop(self,board):
         if self.top == "f":
             return self.center.invert()
         else:
             return board[self.top].center.value
     
+    def getLeftLocation(self):
+        return self.left
+
     def getLeft(self,board):
         if self.left == "f":
             return self.center.invert()
         else:
             return board[self.left].center.value
         
+    def getBottomLocation(self):
+        return self.bottom
+
     def getBottom(self,board):
         if self.bottom == "f":
             return self.center.invert()
         else:
             #print(self.bottom)
             return board[self.bottom].center.value
-        
+    
+    def getSuroundLocations(self):
+        return self.top, self.right, self.bottom, self.left
+
     def getSurounds(self,board):
         tValue = self.getTop(board)
         rValue = self.getRight(board)
@@ -280,6 +317,7 @@ class group():
         self.board = board
         self.position = position
         self.length = length
+
         self.alive = False
         
     # group detection algorithm to check if a group is alive
@@ -317,8 +355,7 @@ class game():
     def __init__(self):
         self.__mainBoard = board()
         self.__player = stone()
-        self.__file = FH.fileHandler()
-        
+        self.__file = FH.fileHandler() 
             
     def __printMenu(self):
         print("\n===================")
@@ -442,5 +479,9 @@ def getValidInt(mini,maxi,message, exceptions = []):
             return int(num)
 
 if __name__ == "__main__":
+    '''
     main = game()
     main.main()
+    '''
+    test = board()
+    test.removeDeadTiles("x", 30)
