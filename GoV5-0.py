@@ -368,13 +368,6 @@ class group():
         if y != 0:
             self.checkIfGroupAlive(x,(y-1),targetCounter,replacmentCounter) # go down
 
-# blank
-class AI():
-    def __init__(self):
-        pass
-        # blank ???
-
-
 class game():
     def __init__(self):
         self.__mainBoard = board()
