@@ -10,16 +10,23 @@ class board():
     # group detection is for use with the group detection algorithm, it will be reset by copying
     # blankCopy into it
     def __init__(self):
+        # basic game variables
         self.length = 9
         self.size = self.length * self.length
         self.board = 0
 
+        # no of stones removed for each player
         self.xLoses = 0
         self.oLoses = 0
 
+        # used to check ko rule
         self.noLastDeadStones = -1
         self.lastRemovedStoneLocation = -1 # index position rather than cartesian
 
+        # used to count no of changed tiles in the flood fill 
+        self.noChangedTiles = 0
+
+        # reset before a game
         self.resetBoard()
 
         # only needed if the dead stone removal algorithm is ever imporved
@@ -35,7 +42,7 @@ class board():
     def playTurn(self, x, y, player):
         index = (y*self.length) + x
         self.editTile(index,player.getValue())
-        self.removeDeadTiles(player.invert())
+        self.removeDeadTiles(player.invert(),index)
 
     def resetBoard(self):
         self.board = np.empty(self.size, object)
@@ -129,18 +136,29 @@ class board():
     
     # remove dead tiles beloning to "player" surounding "location"
     def removeDeadTiles(self,player,location):
+        self.lastRemovedStoneLocation = -1
+        self.noLastDeadStones = -1
         deadStones = 0 
         tiles = self.board[location].getSuroundLocations()
-        tiles += (location,)
+        # tiles += (location,) # i dont think this is needed
         for position in tiles:
-            if self.board[position].center.value == player:
-                isGroup = self.checkIfGroup(position,player)
-                if isGroup:
-                    self.removeDeadGroup(player,position)
-                else:
-                    deadStones = self.removeDeadTile(position)
-                    
-       
+            if position != "f":
+                if self.board[position].center.value == player:
+                    isGroup = self.checkIfGroup(position,player)
+                    if isGroup:
+                        deadStones = self.removeDeadGroup(player,position)
+                        self.lastRemovedStoneLocation = -1
+                    else:
+                        deadStones = self.removeDeadTile(position)
+
+        self.__updateDeadStones(player,deadStones)
+
+    def __updateDeadStones(self,player,noDead):
+        if player == "x":
+            self.xLoses += noDead
+        else:
+            self.oLoses += noDead
+
     def checkIfGroup(self,position,player):
         if player in self.board[position].getSurounds(self.board):
             return True
@@ -149,17 +167,22 @@ class board():
     def removeDeadTile(self,position):
         if not(self.board[position].isAlive(self.board)):
             self.editTile(position,BLANK)
+            self.lastRemovedStoneLocation = position
+            self.noLastDeadStones = 1
             return 1
         return 0
     
     def removeDeadGroup(self,player,position):
+        self.noChangedTiles = 0
         y,x = divmod(position,self.length)
-        newGroup = group(self.board,position,self.length)
+        newGroup = group(self.board, position, self.length)
         newGroup.checkIfGroupAlive(x, y, player, "checked")
         if newGroup.alive:
-            self.floodFill(x,y,"checked",player)
+            self.__floodFill(x,y,"checked",player)
+            self.noChangedTiles = 0
         else:
-            self.floodFill(x,y,"checked",BLANK)
+            self.__floodFill(x,y,"checked",BLANK)
+        return self.noChangedTiles
             
     def checkValidMove(self,position):
         # must be improved for use with the AI
@@ -170,7 +193,7 @@ class board():
         return True
     
     def __checkKo(self, position):
-        if self.noLastRemovedStones == 1 and position == self.lastRemovedStoneLocation:
+        if self.noLastDeadStones == 1 and position == self.lastRemovedStoneLocation:
             return True
         return False
         """
@@ -197,21 +220,22 @@ class board():
         
     # found this pseudocode on freeCodeCamp (basicaly c++ not pseudocode)
     # it was fairly bad so this is it improved (i hope)
-    def floodFill(self,x, y, targetCounter, replacmentCounter):
+    def __floodFill(self,x, y, targetCounter, replacmentCounter):
         currentValue = self.board[(x+(y*self.length))].center.value
         if currentValue != targetCounter:
             return
         
         self.board[(x+(y*self.length))].center.value = replacmentCounter
-        
+        self.noChangedTiles += 1
+
         if (x+1) < self.length:
-            self.floodFill((x+1),y,targetCounter,replacmentCounter) # go right
+            self.__floodFill((x+1),y,targetCounter,replacmentCounter) # go right
         if x != 0:
-            self.floodFill((x-1),y,targetCounter,replacmentCounter) # go left
+            self.__floodFill((x-1),y,targetCounter,replacmentCounter) # go left
         if (y+1) < self.length:
-            self.floodFill(x,(y+1),targetCounter,replacmentCounter) # go up
+            self.__floodFill(x,(y+1),targetCounter,replacmentCounter) # go up
         if y != 0:
-            self.floodFill(x,(y-1),targetCounter,replacmentCounter) # go down
+            self.__floodFill(x,(y-1),targetCounter,replacmentCounter) # go down
 
 class tile():
     def __init__(self):
@@ -479,9 +503,6 @@ def getValidInt(mini,maxi,message, exceptions = []):
             return int(num)
 
 if __name__ == "__main__":
-    '''
     main = game()
     main.main()
-    '''
-    test = board()
-    test.removeDeadTiles("x", 30)
+    
