@@ -6,6 +6,35 @@ class board():
     def resetGame(self):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
 
+    def drawBoard(self):
+        print("+ = A = + = B = + = C = +")
+        line1 = ""
+        line2 = ""
+        line3 = ""
+        for y in range(len(self.__board)):
+            line1 =  "|"
+            line2 =  str(y+1)
+            line3 =  "|"
+            for x in range(len(self.__board[y])):  
+                #print(self.__board[y][x])
+                if self.__board[y][x] == "o":
+                    line1 = line1 + " /   \ "
+                    line2 = line2 + " |   | " +str(y+1)
+                    line3 = line3 + " \___/ |"
+                elif self.__board[y][x] == "x":
+                    line1 = line1 + "  \ /  |"
+                    line2 = line2 + "   \   " + str(y+1)
+                    line3 = line3 + "  / \  |"
+                else:
+                    line1 = line1 + "       |"
+                    line2 = line2 + "       " + str(y+1)
+                    line3 = line3 + "       |"
+            print(line1)
+            print(line2)
+            print(line3)
+            print("+ = A = + = B = + = C = +")
+        print("\n\n\n\n")
+
     def checkIfWon(self):
         for i in self.__board:
             if i[0] == i[1] == i[2] != BLANK:
@@ -32,7 +61,17 @@ class board():
             return True
         return False
 
+    # returns finshed, winner
     def playTurn(self,x,y,player):
+        self.__baord[y][x] = player
+        winner = self.checkIfWon()
+        if winner == BLANK:
+            if self.getNoMoves() == 0:
+                return True, BLANK
+            return False, BLANK
+        else:
+            return True, winner
+
         
     
 class game():

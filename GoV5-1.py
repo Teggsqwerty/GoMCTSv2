@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import fileHandlingV1 as FH
 BLANK = ""
 
@@ -42,9 +43,10 @@ class board():
     def playTurn(self, x, y, player):
         index = (y*self.length) + x
         self.editTile(index,player.getValue())
-        self.removeDeadTiles(player.invert(),index)
+        self.removeDeadTiles(player.getInverse(),index)
 
     def resetBoard(self):
+        self.size = self.length * self.length
         self.board = np.empty(self.size, object)
         for index in range(self.size):
             self.board[index] = tile()
@@ -250,7 +252,7 @@ class tile():
 
     def getRight(self,board):
         if self.right == "f":
-            return self.center.invert()
+            return self.center.getInverse()
         else:
             return board[self.right].center.value
     
@@ -259,7 +261,7 @@ class tile():
 
     def getTop(self,board):
         if self.top == "f":
-            return self.center.invert()
+            return self.center.getInverse()
         else:
             return board[self.top].center.value
     
@@ -268,7 +270,7 @@ class tile():
 
     def getLeft(self,board):
         if self.left == "f":
-            return self.center.invert()
+            return self.center.getInverse()
         else:
             return board[self.left].center.value
         
@@ -277,7 +279,7 @@ class tile():
 
     def getBottom(self,board):
         if self.bottom == "f":
-            return self.center.invert()
+            return self.center.getInverse()
         else:
             #print(self.bottom)
             return board[self.bottom].center.value
@@ -297,22 +299,22 @@ class tile():
 
     def isAlive(self,board):
         try:
-            if board[self.right].center.value != (self.center.invert()):
+            if board[self.right].center.value != (self.center.getInverse()):
                 return True
         except:
             pass
         try:
-            if board[self.left].center.value != (self.center.invert()):
+            if board[self.left].center.value != (self.center.getInverse()):
                 return True 
         except:
             pass
         try:
-            if board[self.top].center.value != (self.center.invert()):
+            if board[self.top].center.value != (self.center.getInverse()):
                 return True
         except:
             pass
         try:
-            if board[self.bottom].center.value != (self.center.invert()):
+            if board[self.bottom].center.value != (self.center.getInverse()):
                 return True
         except:
             pass
@@ -328,13 +330,16 @@ class stone():
     def getValue(self):
         return self.value
     
-    def invert(self):
+    def getInverse(self):
         if self.value == "x":
             return "o"
         elif self.value == "o":
             return "x"
         else:
-            return -1
+            return BLANK
+    
+    def invert(self):
+        self.value = self.getInverse()
   
 class group():
     def __init__(self,board,position,length):
@@ -375,12 +380,13 @@ class game():
         self.__file = FH.fileHandler() 
             
     def __printMenu(self):
-        print("\n===================")
+        print("\n=========================")
         print("S: save game")
         print("Q: quit game")
         print("P: print game")
+        print("D: Display Score Graph")
         print("Enter: continue")
-        print("===================\n")
+        print("=========================\n")
         print("enter your Choice: ", end = "")
 
     def __getValidMove(self):
@@ -403,15 +409,18 @@ class game():
                 return x,0
         
     def __playGameTxt(self, boardWidth):
+        test = stone() # used for testing
+        test.setValue("x") # used for testing
         self.__player.setValue("x")
         self.__mainBoard.setLength(boardWidth)
         self.__mainBoard.resetBoard()
         won = False
         turnCounter = 0
+        scores = [0]
         data = []
         while not(won):
             self.__mainBoard.printBoard()
-            print("current score is " + str(self.__mainBoard.getScore(self.__player)))
+            print("current score is " + str(self.__mainBoard.getScore(test))) # "test" used just for testing
             print(f"it is player {self.__player.getValue()}'s turn.\n")
             x = "M"
             while x == "M":
@@ -427,30 +436,74 @@ class game():
                         x == -1
                     elif Choice == "P":
                         print(data)
+                    elif Choice == "D":
+                        self.__graphScore(scores)
             if x != -1:
                 self.__mainBoard.playTurn(x,y,self.__player)
                 turnCounter += 1
                 data.append([x,y])
-                self.__player.setValue(self.__player.invert())
+                self.__player.setValue(self.__player.getInverse())
+            scores[turnCounter] = self.__mainBoard.getScore(test)
 
+    def __loadExampleGame(self, filename, sgf, boardWidth):
+        test = stone() # used for testing
+        test.setValue("x") # used for testing
 
-    def __playExampleGame(self, filename, sgf, length):
-        file = FH.fileHandler(sgf)
-        data = file.readData(filename)
-        mainBoard = board(length)
-        player = stone()
-        player.value = "x"
-        print(data)
-        for turn in data:
-            index = int(((length - turn[1])*length) + (turn[0]-1))
-            player.value = turn[2]
-            mainBoard.editTile(index,player.value)
-            player.value = player.invert()
-            mainBoard.removeDeadTiles(player.value)
-            mainBoard.removeDeadTiles(player.invert())
-            mainBoard.printBoard()
-            print(mainBoard.scoreBoard())
+        self.__player.setValue("x")
+        self.__mainBoard.setLength(boardWidth)
+        self.__mainBoard.resetBoard()
 
+        won = False
+        turnCounter = 0
+        scores = [0]
+        data = []
+
+        self.__file.setFileType(sgf)
+        fileData, error = self.__file.readData(filename)
+
+        if error != "":
+            raise Exception(error)
+
+        for turn in fileData:
+            y = boardWidth - turn[1]
+            x = turn[0] - 1
+            data.append([x,y])
+            self.__mainBoard.playTurn(x,y,self.__player)
+            
+            self.__player.invert()
+            scores.append(self.__mainBoard.getScore(test))
+            # self.__mainBoard.printBoard()
+            # print("current score is " + str(self.__mainBoard.getScore(test)))
+
+        while not(won):
+            self.__mainBoard.printBoard()
+            print("current score is " + str(self.__mainBoard.getScore(test))) # "test" used just for testing
+            print(f"it is player {self.__player.getValue()}'s turn.\n")
+            x = "M"
+            while x == "M":
+                x,y = self.__getValidMove()
+                if x == "M":
+                    self.__printMenu()
+                    Choice = input()
+                    if Choice == "S":
+                        filename = input("enter save game name: ")
+                        self.__file.saveData(data,filename)
+                    elif Choice == "Q": # hello world
+                        won = True
+                        x == -1
+                    elif Choice == "P":
+                        print(data)
+                    elif Choice == "D":
+                        self.__graphScore(scores)
+            if x != -1:
+                self.__mainBoard.playTurn(x,y,self.__player)
+                scores[turnCounter] = self.__mainBoard.getScore(test)
+                turnCounter += 1
+                data.append([x,y])
+                self.__player.setValue(self.__player.getInverse())
+            
+
+        
     def __getMainMenuChoice(self):
         while True:
             print("=============================")
@@ -462,6 +515,12 @@ class game():
             print("==============================\n")
             return getValidInt(1,3,"enter your choice: ",[9])
     
+    def __graphScore(self,scores):
+        length = len(scores)
+        y = np.array(scores)
+        plt.plot(y)
+        plt.show()
+
     def main(self):
         playing = True
         while playing:
@@ -474,11 +533,11 @@ class game():
                 invalid = True
                 while invalid:
                     fName = input("Enter a valid file name: ")
-                    try:
-                        self.__playExampleGame(fName, (mainChoice==3), boardSize)
-                        invalid = False
-                    except:
-                        print("Must be a valid file name.")
+                    #try:
+                    self.__loadExampleGame(fName, (mainChoice==3), boardSize)
+                        #invalid = False
+                    #except:
+                        #print("Must be a valid file name.")
             elif mainChoice == 9:
                 playing = False
     
@@ -486,8 +545,9 @@ class game():
 def getValidInt(mini,maxi,message, exceptions = []):
     while True:
         num = input(message)
-        if num in exceptions:
-            return num
+        intNum = tryInt(num)
+        if intNum in exceptions:
+            return intNum
         elif not(num.isnumeric()):
             print("must be a number")
         elif not(int(num) in range(mini,(maxi+1))):
@@ -495,7 +555,13 @@ def getValidInt(mini,maxi,message, exceptions = []):
         else:
             return int(num)
 
+# this must be stored with the getValidInt sub
+def tryInt(num):
+    try:
+        return int(num)
+    except:
+        return num
+    
 if __name__ == "__main__":
     main = game()
     main.main()
-    
