@@ -6,7 +6,7 @@ class board():
     def resetGame(self):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
 
-    def drawBoard(self):
+    def printBoard(self):
         print("+ = A = + = B = + = C = +")
         line1 = ""
         line2 = ""
@@ -63,7 +63,7 @@ class board():
 
     # returns finshed, winner
     def playTurn(self,x,y,player):
-        self.__baord[y][x] = player
+        self.__board[y][x] = player
         winner = self.checkIfWon()
         if winner == BLANK:
             if self.getNoMoves() == 0:
@@ -72,8 +72,6 @@ class board():
         else:
             return True, winner
 
-        
-    
 class game():
     def __init__(self):
         self.user = "x"
@@ -158,11 +156,22 @@ class game():
 def getValidInt(mini,maxi,message, exceptions = []):
     while True:
         num = input(message)
-        if num in exceptions:
-            return num
+        intNum = tryInt(num)
+        if intNum in exceptions:
+            return intNum
         elif not(num.isnumeric()):
             print("must be a number")
         elif not(int(num) in range(mini,(maxi+1))):
             print(f"must be in range {mini} to {maxi}")
         else:
             return int(num)
+
+# this must be stored with the getValidInt sub
+def tryInt(num):
+    try:
+        return int(num)
+    except:
+        return num
+
+if __name__ == "__main__":
+    
