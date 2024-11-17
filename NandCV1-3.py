@@ -7,7 +7,7 @@ class board():
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
 
     def printBoard(self):
-        print("+ = A = + = B = + = C = +")
+        print("+ = 1 = + = 2 = + = 3 = +")
         line1 = ""
         line2 = ""
         line3 = ""
@@ -18,7 +18,7 @@ class board():
             for x in range(len(self.__board[y])):  
                 #print(self.__board[y][x])
                 if self.__board[y][x] == "o":
-                    line1 = line1 + " /   \ "
+                    line1 = line1 + " /¯¯¯\ |"
                     line2 = line2 + " |   | " +str(y+1)
                     line3 = line3 + " \___/ |"
                 elif self.__board[y][x] == "x":
@@ -32,8 +32,8 @@ class board():
             print(line1)
             print(line2)
             print(line3)
-            print("+ = A = + = B = + = C = +")
-        print("\n\n\n\n")
+            print("+ = 1 = + = 2 = + = 3 = +")
+        #print("\n\n\n\n")
 
     def checkIfWon(self):
         for i in self.__board:
@@ -60,6 +60,9 @@ class board():
         if self.__board[y][x] != "x" and self.__board[y][x] != "o":
             return True
         return False
+    
+    def makeMove(self, x, y, player):
+        self.__board[y][x] = player
 
     # returns finshed, winner
     def playTurn(self,x,y,player):
@@ -74,83 +77,52 @@ class board():
 
 class game():
     def __init__(self):
-        self.user = "x"
-        self.won = False
-        self.singlePlayer = False
+        self.__board = board()
+        self.__user = "x"
+        self.__singlePlayer = False
+        self.__score = [0,0] # [x,o]
     
     def userTurn(self,x,y):
-        if self.won:
-            for y in range(3):
-                for x in range(3):
-                    self.__board[y][x] = ""
-            self.won = False
-            message = "can player 1 (X) please play"
-            valid = True
-        else:
-            valid = self.checkValidLocation(x,y)
-            if valid:
-                self.__board[y][x] = self.user
-                winner = self.checkIfWon()
-
-                if self.user == "o":
-                    message = "can player 1 (X) please play"
-                    self.user = "x"
-                else:
-                    message = "can player 2 (O) please play"
-                    self.user = "o"
-
+        valid = self.__board.checkValidLocation(x,y)
+        if valid:
+            finished, winner = self.__board.playTurn(x,y,self.__user)
+            if finished:
+                self.__board.resetGame()
                 if winner == "x":
                     message = "player 1 (X) has won!\nclick any button to reset"
-                    self.won = True
+                    self.__score[0] += 1
                 elif winner == "o":
                     message = "player 2 (O) has won!\nclick any button to reset"
-                    self.won = True
+                    self.__score[1] += 1
                 elif self.findAllMoves() == 0:
                     message = "draw! both sides win 1/2 a point\nclick any button to reset"
-                    self.won = True
-            else:
-                message = "invalid move, please try again"
-                
-        return message, valid
-    
-    def singlePlayerTurn(self, x, y):
-        if self.won:
-            for y in range(3):
-                for x in range(3):
-                    self.__board[y][x] = ""
-            self.won = False
-            message = "can player 1 (X) please play"
-            valid = True
-        else:
-            valid = self.checkValidLocation(x,y)
-            if valid:
-                self.board[y][x] = self.user
-                winner = self.checkIfWon()
+                    self.__score[0] += 0.5
+                    self.__score[0] += 0.5
+            elif self.__user == "o":
                 message = "can player 1 (X) please play"
-                if winner == "x":
-                    message = "player 1 (X) has won!\nclick any button to reset"
-                    self.won = True
-                elif winner == "o":
-                    message = "player 2 (O) has won!\nclick any button to reset"
-                    self.won = True
-                elif self.findAllMoves() == 0:
-                    message = "draw! both sides win 1/2 a point\nclick any button to reset"
-                    self.won = True
+                self.__user = "x"
             else:
-                message = "invalid move, please try again"
-            if not(self.won):
-                self.makeMImove()
-                winner = self.checkIfWon()
-                if winner == "x":
-                    message = "player 1 (X) has won!\nclick any button to reset"
-                    self.won = True
-                elif winner == "o":
-                    message = "player 2 (O) has won!\nclick any button to reset"
-                    self.won = True
-                elif self.findAllMoves() == 0:
-                    message = "draw! both sides win 1/2 a point\nclick any button to reset"
-                    self.won = True
-        return message
+                message = "can player 2 (O) please play"
+                self.__user = "o" 
+            return message, valid, finished
+        else:
+            message = "invalid move, please try again"     
+            return message, valid, False 
+    
+    def playTextGame(self):
+        self.__user = "x"
+        finished = False
+        message = "can player 1 (X) please play"
+        while not(finished):
+            self.__board.printBoard()
+            valid = False
+            while not(valid):
+                print(message)
+                x = getValidInt(1,3,"enter x: ") - 1
+                y = getValidInt(1,3,"enter y: ") - 1
+                message, valid, finished = self.userTurn(x,y)
+
+        print("\n\n" + message)
     
 # this is a general sub which returns a value inclusive of the two bounds entered
 def getValidInt(mini,maxi,message, exceptions = []):
@@ -174,4 +146,8 @@ def tryInt(num):
         return num
 
 if __name__ == "__main__":
+    test = game()
+    test.playTextGame() 
+        
     
+
