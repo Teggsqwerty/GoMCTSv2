@@ -6,6 +6,9 @@ class board():
     def resetGame(self):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
 
+    def getBoard(self):
+        return self.__board
+
     def printBoard(self):
         print("+ = 1 = + = 2 = + = 3 = +")
         line1 = ""
@@ -15,13 +18,12 @@ class board():
             line1 =  "|"
             line2 =  str(y+1)
             line3 =  "|"
-            for x in range(len(self.__board[y])):  
-                #print(self.__board[y][x])
-                if self.__board[y][x] == "o":
+            for x in self.__board[y]:  
+                if x == "o":
                     line1 = line1 + " /¯¯¯\ |"
                     line2 = line2 + " |   | " +str(y+1)
                     line3 = line3 + " \___/ |"
-                elif self.__board[y][x] == "x":
+                elif x == "x":
                     line1 = line1 + "  \ /  |"
                     line2 = line2 + "   \   " + str(y+1)
                     line3 = line3 + "  / \  |"
@@ -64,7 +66,7 @@ class board():
     def makeMove(self, x, y, player):
         self.__board[y][x] = player
 
-    # returns finshed, winner
+    # returns finished, winner
     def playTurn(self,x,y,player):
         self.__board[y][x] = player
         winner = self.checkIfWon()
@@ -87,17 +89,17 @@ class game():
         if valid:
             finished, winner = self.__board.playTurn(x,y,self.__user)
             if finished:
-                self.__board.resetGame()
+                
                 if winner == "x":
                     message = "player 1 (X) has won!\nclick any button to reset"
                     self.__score[0] += 1
                 elif winner == "o":
                     message = "player 2 (O) has won!\nclick any button to reset"
                     self.__score[1] += 1
-                elif self.findAllMoves() == 0:
+                elif winner == BLANK:
                     message = "draw! both sides win 1/2 a point\nclick any button to reset"
                     self.__score[0] += 0.5
-                    self.__score[0] += 0.5
+                    self.__score[1] += 0.5
             elif self.__user == "o":
                 message = "can player 1 (X) please play"
                 self.__user = "x"
@@ -110,6 +112,7 @@ class game():
             return message, valid, False 
     
     def playTextGame(self):
+        self.__board.resetGame()    
         self.__user = "x"
         finished = False
         message = "can player 1 (X) please play"
@@ -121,17 +124,57 @@ class game():
                 x = getValidInt(1,3,"enter x: ") - 1
                 y = getValidInt(1,3,"enter y: ") - 1
                 message, valid, finished = self.userTurn(x,y)
-
+        self.__board.printBoard()
         print("\n\n" + message)
+        self.__board.resetGame()
+
+    def playAIGame(self):
+        self.__user = "x"
+        finished = False
+        while not(finished):
+            self.__board.printBoard()
+            test = node()
+            if self.__user == "x":
+                test.setPlayer("x")
+                test.setRoot("o")
+            else:
+                test.setPlayer("o")
+                test.setRoot("x")
+            test.setBoard(self.__board.getBoard())
+            test.fillTree()
+            x,y = test.getBestMove()
+            finished, winner = self.__board.playTurn(x,y,self.__user)
+            if self.__user == "x":
+                self.__user = "o"
+            else:
+                self.__user = "x"
+            print()
+        self.__board.printBoard()
+        
+
 
 class node():
     def __init__(self):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
         self.__childeren = []
-        self.__player = BLANK
+        self.__player = self.__rootPlayer = BLANK
+        self.__score = -1
+        self.__move = [-1,-1]
 
-    def setPlayer(self,player):
-        self.__player = player
+    def getBestMove(self):
+        for child in self.__childeren:
+            if child.__score == self.__score:
+                move = child.getMove()
+                return move[0], move[1]
+
+    def getMove(self):
+        return self.__move
+
+    def getScore(self):
+        return self.__score
+
+    def getBoard(self):
+        return self.__board
 
     def getInversePlayer(self):
         if self.__player == "x":
@@ -146,17 +189,25 @@ class node():
             for y in range(3):
                 self.__board[y][x] = board[y][x]
     
-    def getBoard(self):
-        return self.__board
-    
     def setLoc(self,x,y):
         self.__board[y][x] = self.__player
     
+    def setMove(self,x,y):
+        self.__move = [x,y]
+
+    def setPlayer(self,player):
+        self.__player = player
+    
+    def setRoot(self,val):
+        self.__rootPlayer = val
+
     def addChild(self,x,y):
         self.__childeren.append(node())
         self.__childeren[-1:][0].setBoard(self.__board)
         self.__childeren[-1:][0].setPlayer(self.getInversePlayer())
+        self.__childeren[-1:][0].setRoot(self.__rootPlayer)
         self.__childeren[-1:][0].setLoc(x,y)
+        self.__childeren[-1:][0].setMove(x,y)
 
     def getAllMoves(self):
         possibleMoves = []
@@ -171,27 +222,40 @@ class node():
     def checkIfWon(self):
         for i in self.__board:
             if i[0] == i[1] == i[2] != BLANK:
-                return True
+                return True, i[0]
         for i in range(len(self.__board[0])):
             if self.__board[0][i] == self.__board[1][i] == self.__board[2][i] != BLANK:
-                return True
+                return True, self.__board[0][i]
         if self.__board[0][0] == self.__board[1][1] == self.__board[2][2] != BLANK:
-            return True
+            return True, self.__board[0][0]
         if self.__board[0][2] == self.__board[1][1] == self.__board[2][0] != BLANK:
-            return True
-        return False
+            return True, self.__board[0][2]
+        return False, BLANK
     
     def fillTree(self):
-        won = self.checkIfWon()
+        won, winner = self.checkIfWon()
         if not(won):
             possibleMoves, count = self.getAllMoves()
             if count != 0:
                 for move in possibleMoves:
                     self.addChild(move[0],move[1])
-            for child in self.__childeren:
-                child.fillTree()
+                scores = []
+                for child in self.__childeren:
+                    child.fillTree()
+                    scores.append(child.getScore())
+                if self.__player == self.__rootPlayer:
+                    self.__score = max(scores)
+                else:
+                    self.__score = min(scores)
+                
+            else:
+                self.__score = 0
+        else:
+            if winner == self.__rootPlayer:
+                self.__score = 1
+            else:
+                self.__score = -1
     
-        
 
 # this is a general sub which returns a value inclusive of the two bounds entered
 def getValidInt(mini,maxi,message, exceptions = []):
@@ -215,8 +279,6 @@ def tryInt(num):
         return num
 
 if __name__ == "__main__":
-    test = node()
-    test.setPlayer("x")
-    test.fillTree()
-    
+    test = game()
+    test.playTextGame()
 
