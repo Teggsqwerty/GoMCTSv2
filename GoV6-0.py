@@ -21,8 +21,8 @@ class board():
         self.oLoses = 0
 
         # used to check ko rule
-        self.noLastDeadStones = -1
-        self.lastRemovedStoneLocation = -1 # index position rather than cartesian
+        self.oneDeadStone = False
+        self.lastRemStoneLoc = -1 # index position rather than cartesian
 
         # used to count no of changed tiles in the flood fill 
         self.noChangedTiles = 0
@@ -54,8 +54,8 @@ class board():
 
         self.xLoses = 0
         self.oLoses = 0
-        self.noLastDeadStones = -1
-        self.lastRemovedStoneLocation = -1
+        self.oneDeadStone = False
+        self.lastRemStoneLoc = -1
 
     def initPointer(self,blank):
         for index in range(self.size):
@@ -85,14 +85,14 @@ class board():
                 lefInd = lefX+lefY*self.length
                 blank[index].left = lefInd
                 
-    def makePrintable(self):
+    def __makePrintable(self):
         printable = [[BLANK for _ in range(self.length)] for _ in range(self.length)]
         for index in range(self.size):
             y,x = divmod(index,self.length)
             printable[y][x] = self.board[index].center.value
         return printable
     
-    def printXIndex(self):
+    def __printXIndex(self):
         print(" ", end = "")
         for n in range(1,self.length+1):
             if n > 9:
@@ -101,7 +101,7 @@ class board():
                 print(f"  {n}",end = " ")
         print()
         
-    def processRow(self,board,y):
+    def __processRow(self,board,y):
         string = BLANK
         for x in range(self.length):
             if (board[y][x] == "x"):
@@ -116,10 +116,10 @@ class board():
         return string[:-3]
     
     def printBoard(self):
-        board = self.makePrintable()
-        self.printXIndex()
+        board = self.__makePrintable()
+        self.__printXIndex()
         for y in range(self.length):
-            string = self.processRow(board,y)
+            string = self.__processRow(board,y)
             printedY = (self.length - y)
             if printedY < 10:
                 print(printedY,"  ", string,"  ",printedY,sep = "")
@@ -130,7 +130,7 @@ class board():
                 for _ in range(self.length):
                     string += " |  "
                 print(" ",string)
-        self.printXIndex()
+        self.__printXIndex()
         print("\n\n")
         
     def editTile(self,position,char):
@@ -138,8 +138,8 @@ class board():
     
     # remove dead tiles beloning to "player" surounding "location"
     def removeDeadTiles(self,player,location):
-        self.lastRemovedStoneLocation = -1
-        self.noLastDeadStones = -1
+        self.lastRemStoneLoc = -1
+        self.oneDeadStone = False
         deadStones = 0 
         tiles = self.board[location].getSuroundLocations()
         # tiles += (location,) # i dont think this is needed
@@ -149,7 +149,6 @@ class board():
                     isGroup = self.checkIfGroup(position,player)
                     if isGroup:
                         deadStones = self.removeDeadGroup(player,position)
-                        self.lastRemovedStoneLocation = -1
                     else:
                         deadStones = self.removeDeadTile(position)
 
@@ -169,8 +168,8 @@ class board():
     def removeDeadTile(self,position):
         if not(self.board[position].isAlive(self.board)):
             self.editTile(position,BLANK)
-            self.lastRemovedStoneLocation = position
-            self.noLastDeadStones = 1
+            self.lastRemStoneLoc = position
+            self.oneDeadStone = True
             return 1
         return 0
     
@@ -187,7 +186,6 @@ class board():
         return self.noChangedTiles
             
     def checkValidMove(self,position):
-        # must be improved for use with the AI
         if self.board[position].center.value != BLANK:
             return False
         elif self.__checkKo(position):
@@ -195,7 +193,7 @@ class board():
         return True
     
     def __checkKo(self, position):
-        if self.noLastDeadStones == 1 and position == self.lastRemovedStoneLocation:
+        if self.oneDeadStone and position == self.lastRemStoneLoc:
             return True
         return False
         """
@@ -216,9 +214,9 @@ class board():
                 elif xCount < oCount:
                     oScore += 1
         if player == "x":
-            return xScore - oScore
+            return (xScore - oScore) + self.oLoses
         else:
-            return oScore - xScore
+            return (oScore - xScore) + self.xLoses
         
     # found this pseudocode on freeCodeCamp (basicaly c++ not pseudocode)
     # it was fairly bad so this is it improved (i hope)
@@ -281,7 +279,6 @@ class tile():
         if self.bottom == "f":
             return self.center.getInverse()
         else:
-            #print(self.bottom)
             return board[self.bottom].center.value
     
     def getSuroundLocations(self):
@@ -571,5 +568,14 @@ def tryInt(num):
         return num
     
 if __name__ == "__main__":
+    '''
     main = game()
     main.main()
+    '''
+    test = board()
+    test.resetBoard()
+    test.printBoard()
+    testX = getValidInt(1,9,"enter x") - 1
+    testY = getValidInt(1,9,"enter y") - 1
+    test.editTile((testX+9*testY),"x")
+    test.printBoard()
