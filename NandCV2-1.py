@@ -80,18 +80,18 @@ class board():
 class node():
     def __init__(self, player, isMax, rootPlayer, move = [-1,-1]):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
-        self.__childeren = []
+        self.__children = []
         self.__player = player
         self.__rootPlayer = rootPlayer
         self.__isMax = isMax
         self.__score = 0
         self.__move = move
 
-    def getChilderen(self):
-        return self.__childeren
+    def getchildren(self):
+        return self.__children
     
     def getBestMove(self):
-        for child in self.__childeren:
+        for child in self.__children:
             if child.__score == self.__score:
                 move = child.getMove()
                 return move[0], move[1]
@@ -128,9 +128,9 @@ class node():
         self.__player = player
 
     def addChild(self,x,y):
-        self.__childeren.append(node(self.getInversePlayer(),not(self.__isMax),self.__rootPlayer, [x,y]))
-        self.__childeren[-1].setBoard(self.__board)
-        self.__childeren[-1].setLoc(x,y)
+        self.__children.append(node(self.getInversePlayer(),not(self.__isMax),self.__rootPlayer, [x,y]))
+        self.__children[-1].setBoard(self.__board)
+        self.__children[-1].setLoc(x,y)
 
     def getAllMoves(self):
         possibleMoves = []
@@ -174,14 +174,14 @@ class node():
             self.__score = -1
             for i in range(noMoves):
                 self.addChild(moves[i][0],moves[i][1])
-                score = self.__childeren[i].minimax()
+                score = self.__children[i].minimax()
                 self.__score = max(score,self.__score)
             return self.__score
         else:
             self.__score = 1
             for i in range(noMoves):
                 self.addChild(moves[i][0],moves[i][1])
-                score = self.__childeren[i].minimax()
+                score = self.__children[i].minimax()
                 self.__score = min(score,self.__score)
             return self.__score
             
@@ -327,12 +327,12 @@ if __name__ == "__main__":
     while not(won):
         z,m = divmod(i,3)
         currentChild.addChild(z,m)
-        nextChild = currentChild.getChilderen()[0]
+        nextChild = currentChild.getchildren()[0]
         print(nextChild.getAllMoves())
         currentChild = nextChild
         moves,num = nextChild.getAllMoves()
         if num == 0:
             won = True
         i += 1
-    print(test.getChilderen()[-1].getAllMoves())
+    print(test.getchildren()[-1].getAllMoves())
     '''
