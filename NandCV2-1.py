@@ -1,4 +1,5 @@
-BLANK = ""
+from basicImports import *
+
 class board():
     def __init__(self):
         self.__board = [[BLANK for _ in range(3)] for _ in range(3)]
@@ -292,27 +293,6 @@ class game():
         self.__board.printBoard()
         print("\n\n" + message)
         self.__board.resetGame()
-
-# this is a general sub which returns a value inclusive of the two bounds entered
-def getValidInt(mini,maxi,message, exceptions = []):
-    while True:
-        num = input(message)
-        intNum = tryInt(num)
-        if intNum in exceptions:
-            return intNum
-        elif not(num.isnumeric()):
-            print("must be a number")
-        elif not(int(num) in range(mini,(maxi+1))):
-            print(f"must be in range {mini} to {maxi}")
-        else:
-            return int(num)
-
-# this must be stored with the getValidInt sub
-def tryInt(num):
-    try:
-        return int(num)
-    except:
-        return num
 
 if __name__ == "__main__":
     
