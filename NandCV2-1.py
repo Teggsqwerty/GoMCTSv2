@@ -241,13 +241,13 @@ class game():
             self.__user = "o"
             test = node(self.__user,False,self.__user)
             test.setBoard(self.__board.getBoard())
-            #print(test.minimax())
+            test.minimax()
             x,y = test.getBestMove()
         else:
             self.__user = "x"
             test = node(self.__user,False,self.__user)
             test.setBoard(self.__board.getBoard())
-            #print(test.minimax())
+            test.minimax()
             x,y = test.getBestMove()
             
         return x,y
@@ -315,7 +315,7 @@ def tryInt(num):
         return num
 
 if __name__ == "__main__":
-
+    
     test = game()
     #while True:
     test.playOnePlayerGame()
