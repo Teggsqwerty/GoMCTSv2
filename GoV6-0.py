@@ -45,6 +45,11 @@ class board():
         self.editTile(index,player.getValue())
         self.removeDeadTiles(player.getInverse(),index)
 
+    def playTurnIndex(self, index, player):
+        valid = self.checkValidMove(index)  
+        self.editTile(index,player.getValue())
+        self.removeDeadTiles(player.getInverse(),index)
+
     def resetBoard(self):
         self.size = self.length * self.length
         self.board = np.empty(self.size, object)
@@ -186,7 +191,11 @@ class board():
         return self.noChangedTiles
             
     def checkValidMove(self,position):
-        if self.board[position].center.value != BLANK:
+        val = self.board[position].center.value
+        if val != BLANK:
+            return False
+        surounds = self.board[position].getSurounds(self.board)
+        if not((val in surounds) or (BLANK in surounds)):
             return False
         elif self.__checkKo(position):
             return False
@@ -440,7 +449,7 @@ class game():
                 turnCounter += 1
                 data.append([x,y])
                 self.__player.setValue(self.__player.getInverse())
-            scores[turnCounter] = self.__mainBoard.getScore(test)
+            scores.append(self.__mainBoard.getScore(test))
 
     def __loadExampleGame(self, filename, sgf, boardWidth):
         test = stone() # used for testing
@@ -568,7 +577,7 @@ def tryInt(num):
         return num
     
 if __name__ == "__main__":
-    '''
+    
     main = game()
     main.main()
     '''
@@ -579,3 +588,4 @@ if __name__ == "__main__":
     testY = getValidInt(1,9,"enter y") - 1
     test.editTile((testX+9*testY),"x")
     test.printBoard()
+    '''
