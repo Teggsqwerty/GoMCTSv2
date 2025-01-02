@@ -45,11 +45,6 @@ class board():
         self.editTile(index,player.getValue())
         self.removeDeadTiles(player.getInverse(),index)
 
-    def playTurnIndex(self, index, player):
-        valid = self.checkValidMove(index)  
-        self.editTile(index,player.getValue())
-        self.removeDeadTiles(player.getInverse(),index)
-
     def resetBoard(self):
         self.size = self.length * self.length
         self.board = np.empty(self.size, object)

@@ -198,7 +198,6 @@ class game():
         if valid:
             finished, winner = self.__board.playTurn(x,y,self.__user)
             if finished:
-                
                 if winner == "x":
                     message = "player 1 (X) has won!\nclick any button to reset"
                     self.__score[0] += 1

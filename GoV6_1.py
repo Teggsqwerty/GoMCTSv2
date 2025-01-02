@@ -46,13 +46,26 @@ class board():
     def setBoard(self,new):
         newBoard = new.getBoard()
         for x in range(self.size):
-            self.__board[x] = newBoard[x]
+            if newBoard[x].center.value == "x":
+                self.__board[x].center.value = "x"
+            elif newBoard[x].center.value == "o":
+                self.__board[x].center.value = "o"
+            else:
+                self.__board[x].center.value = BLANK
 
     def playTurn(self, x, y, player):
         index = (y*self.length) + x
         self.editTile(index,player.getValue())
         self.removeDeadTiles(player.getInverse(),index)
 
+    def playTurnIndex(self, index, player):
+        valid = self.checkValidMove(index)  
+        if valid:
+            self.editTile(index,player.getValue())
+            self.removeDeadTiles(player.getInverse(),index)
+            return valid
+        return valid
+    
     def resetBoard(self):
         self.size = self.length * self.length
         self.__board = np.empty(self.size, object)

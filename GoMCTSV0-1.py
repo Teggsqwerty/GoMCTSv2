@@ -2,47 +2,16 @@ from basicImports import *
 from GoV6_1 import *
 import numpy as np
 import random as rnd
-"""
-import mtalg.random as rand
-class rng():
-    def __init__(self):
-        self.__seeds = 0 
-        self.__noSeeds = 0
-        self.__noNewSeeds = 10000000
 
-        self.generateSeeds()
-
-    def generateSeeds(self):
-        self.__seeds = rand.random(self.__noNewSeeds)
-        self.__noSeeds += self.__noNewSeeds
-    
-    # returns a value between 0 and maxval inclusive
-    def getRndNum(self,maxval):
-        if self.__noSeeds == 0:
-            self.generateSeeds() 
-        seed = self.__seeds[-1]
-        self.__seeds = self.__seeds[:-1]
-        self.__noSeeds -= 1
-        value = int(seed*(maxval))
-        return value + 1
-
-# test code for above
-'''
-vals = [0,0,0,0]
-test = rng()
-for x in range(100000):
-    vals[int(test.getRndNum(4)) - 1] += 1
-print(vals)
-'''
-"""
 
 class MCTS():
     def __init__(self):
-        #self.__rnd = rng()
         self.__size = 81
         self.__player = "x"
-        self.__maxSearchDepth = 5
-        self.__simDepth = (-(self.__size // -100))*100 # this is an arbitary value 
+        # still gives approx. 10 trillion possible games
+        self.__maxSearchDepth = 5 
+        # this is an arbitary value, size rounded up to the nearest 100 
+        self.__simDepth = (-(self.__size // -100))*100 
         self.__path = []
 
     def __startTree(self):
@@ -50,22 +19,24 @@ class MCTS():
 
     def getBestMove(self):
         self.__startTree()
-        self.__tree.addChild(25)
+        for x in range(40):
+            self.__tree.addChild(x)
+        print(len(self.__tree.getChildren()))
         end = self.selection()
-        self.simulation(end)
-        print(end.getChildren()[0].getScore())
+        end.printBoard()
 
     def selection(self):
         depth = 0
         current = self.__tree
         while True:
             self.__path.append(current)
-            #childNum = self.__rnd.getRndNum(self.__size)
+            if depth > self.__maxSearchDepth:
+                return current
             childNum = rnd.randint(0,self.__size)
-            if childNum >= current.getNumChildren() or depth > self.__maxSearchDepth:
+            if childNum >= current.getNumChildren():
                 return current
             else:
-                new = current.getchildren()[childNum]
+                new = current.getChildren()[childNum]
                 current = new
             depth += 1
     
@@ -73,8 +44,6 @@ class MCTS():
         node.addCopyChild()
         for x in range(self.__simDepth):
             moves, num = node.getAllMoves()
-            #ind = int(self.__rnd.getRndNum(len(moves)))
-            #print(moves,len(moves), ind)
             move = moves[rnd.randint(0, (len(moves) - 1))]
             node.setLocation(move)
         node.setScore(node.getBoard().getScore(self.__player))
@@ -129,6 +98,9 @@ class node():
                 count += 1
         return moves, count
 
+    def printBoard(self):
+        self.__board.printBoard()
+
     def setLeaf(self, val):
         self.__isLeaf = val
 
@@ -156,7 +128,8 @@ class node():
 
 if __name__ == "__main__":
     test = MCTS()
-    test.getBestMove()
+    for x in range(10):
+        test.getBestMove()
     '''
     vals = [0,0,0,0]
     test = rng()
