@@ -11,19 +11,21 @@ class MCTS():
         # still gives approx. 10 trillion possible games
         self.__maxSearchDepth = 5 
         # this is an arbitary value, size rounded up to the nearest 100 
-        self.__simDepth = (-(self.__size // -100))*100 
+        self.__simDepth = (-(self.__size // -100))*100 # use 10 for tests
         self.__path = []
 
     def __startTree(self):
         self.__tree = node(self.__size, self.__player, self.__player, False)
 
-    def getBestMove(self): # test code
+    def getBestMove(self):
         self.__startTree()
         for x in range(40):
             self.__tree.addChild(x)
-        print(len(self.__tree.getChildren()))
         end = self.selection()
-        end.printBoard()
+        self.simulation(end)
+        print(end.getLastChild().getScore())
+        print(end.getLastChild().getBoard().printBoard())
+        print(end.getChildren()[0].getScore())
 
     def selection(self):
         depth = 0
@@ -42,12 +44,17 @@ class MCTS():
     
     def simulation(self,node):
         node.addCopyChild()
+        sim = node.getLastChild()
         for x in range(self.__simDepth):
             moves, num = node.getAllMoves()
             move = moves[rnd.randint(0, (len(moves) - 1))]
-            node.setLocation(move)
-        node.setScore(node.getBoard().getScore(self.__player))
-
+            sim.setLocation(move)
+            sim.invertPlayer()
+            # sim.printBoard() # for tests
+        sim.setScore(sim.getBoard().getScore(self.__player))
+    
+    def backpropogation(self):
+        pass
 
 class node():
     def __init__(self, size, player, root, isMax):
@@ -67,6 +74,9 @@ class node():
 
     def getChildren(self):
         return self.__children
+    
+    def getLastChild(self):
+        return self.__children[-1]
     
     def getNumChildren(self):
         return len(self.__children)
@@ -88,6 +98,9 @@ class node():
 
     def getInversePlayer(self):
         return self.__player.getInverse()
+    
+    def getPlayer(self):
+        return self.__player
     
     def getAllMoves(self):
         moves = []
@@ -117,6 +130,12 @@ class node():
     def setScore(self,val):
         self.__score = val
 
+    def setLeaf(self):
+        self.__isLeaf = True
+
+    def invertPlayer(self):
+        return self.__player.invert()
+
     def addChild(self,index):
         self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax)))
         self.__children[-1].setBoard(self.__board)
@@ -125,7 +144,8 @@ class node():
     def addCopyChild(self):
         self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax)))
         self.__children[-1].setBoard(self.__board)
+        self.__children[-1].setLeaf()
 
 if __name__ == "__main__":
     test = MCTS()
-    
+    test.getBestMove()

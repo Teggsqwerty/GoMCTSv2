@@ -294,24 +294,30 @@ class game():
         self.__board.resetGame()
 
 if __name__ == "__main__":
+   
+    # test = node("x",True,"x")
+    # test.setBoard([["x","o","x"],["o","x","o"],["x","o","x"]])
+    # print(test.getBoard())
+    
     
     test = game()
     #while True:
-    test.playOnePlayerGame()
-    '''
-    test = node("x",True,"x")
-    currentChild = test
-    won = False
-    i = 0
-    while not(won):
-        z,m = divmod(i,3)
-        currentChild.addChild(z,m)
-        nextChild = currentChild.getchildren()[0]
-        print(nextChild.getAllMoves())
-        currentChild = nextChild
-        moves,num = nextChild.getAllMoves()
-        if num == 0:
-            won = True
-        i += 1
-    print(test.getchildren()[-1].getAllMoves())
-    '''
+    test.playAIGame()
+    
+    
+    # test = node("x",True,"x")
+    # currentChild = test
+    # won = False
+    # i = 0
+    # while not(won):
+    #     z,m = divmod(i,3)
+    #     currentChild.addChild(z,m)
+    #     nextChild = currentChild.getchildren()[0]
+    #     print(nextChild.getAllMoves())
+    #     currentChild = nextChild
+    #     moves,num = nextChild.getAllMoves()
+    #     if num == 0:
+    #         won = True
+    #     i += 1
+    # print(test.getchildren()[-1].getAllMoves())
+    
