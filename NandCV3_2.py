@@ -88,7 +88,7 @@ class node():
         self.__score = 0
         self.__move = move
 
-    def getchildren(self):
+    def getChildren(self):
         return self.__children
     
     def getBestMove(self):
@@ -185,15 +185,41 @@ class node():
                 score = self.__children[i].minimax()
                 self.__score = min(score,self.__score)
             return self.__score
+        
+class measure():
+    def __init__(self):
+        self.__maxSpan = 0
+        self.__maxDepth = 0
+        self.__noNodes = 0
+        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+
+    def measureTree(self, node, depth):
+        self.__noNodes += 1
+        self.__depths[depth] += 1
+        children = node.getChildren()
+        for child in children:
+            self.measureTree(child,(depth + 1))
+        
+    def getDepths(self):
+        return self.__depths
             
-class game():
+class NandC():
     def __init__(self):
         self.__board = board()
         self.__user = "x"
         self.__singlePlayer = False
         self.__score = [0,0] # [x,o]
+
+    def GUISinglePlayer(self,x,y):
+        pass
+
+    def GUITwoPlayer(self,x,y):
+        pass
     
-    def userTurn(self,x,y):
+    def GUIZeroPlayer(self):
+        pass
+    
+    def __userTurn(self,x,y):
         valid = self.__board.checkValidLocation(x,y)
         if valid:
             finished, winner = self.__board.playTurn(x,y,self.__user)
@@ -205,7 +231,7 @@ class game():
                     message = "player 2 (O) has won!\nclick any button to reset"
                     self.__score[1] += 1
                 elif winner == BLANK:
-                    message = "draw! both sides win 1/2 a point\nclick any button to reset"
+                    message = "draw! both sides win 1/2 a point\nclick any tile to reset"
                     self.__score[0] += 0.5
                     self.__score[1] += 0.5
             elif self.__user == "o":
@@ -231,23 +257,28 @@ class game():
                 print(message)
                 x = getValidInt(1,3,"enter x: ") - 1
                 y = getValidInt(1,3,"enter y: ") - 1
-                message, valid, finished = self.userTurn(x,y)
+                message, valid, finished = self.__userTurn(x,y)
         self.__board.printBoard()
         print("\n\n" + message)
         self.__board.resetGame()
 
     def __getAiMove(self):
+        calc = measure()
         if self.__user == "x":
             self.__user = "o"
             test = node(self.__user,False,self.__user)
             test.setBoard(self.__board.getBoard())
             test.minimax()
+            calc.measureTree(test,0)
+            print(calc.getDepths())
             x,y = test.getBestMove()
         else:
             self.__user = "x"
             test = node(self.__user,False,self.__user)
             test.setBoard(self.__board.getBoard())
             test.minimax()
+            calc.measureTree(test,0)
+            print(calc.getDepths())
             x,y = test.getBestMove()
             
         return x,y
@@ -280,7 +311,7 @@ class game():
                 print(message)
                 x = getValidInt(1,3,"enter x: ") - 1
                 y = getValidInt(1,3,"enter y: ") - 1
-                message, valid, finished = self.userTurn(x,y)
+                message, valid, finished = self.__userTurn(x,y)
             self.__board.printBoard()
             print(self.__user)
             if not(finished):
@@ -300,7 +331,7 @@ if __name__ == "__main__":
     # print(test.getBoard())
     
     
-    test = game()
+    test = NandC()
     #while True:
     test.playOnePlayerGame()
     

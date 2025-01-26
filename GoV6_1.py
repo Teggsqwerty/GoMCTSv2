@@ -29,10 +29,6 @@ class board():
 
         # reset before a game
         self.resetBoard()
-
-        # only needed if the dead stone removal algorithm is ever imporved
-        self.blankCopy = np.copy(self.__board)
-        self.groupDetection = np.copy(self.__board)
     
     def setLength(self,length):
         self.length = length
@@ -59,11 +55,14 @@ class board():
         self.removeDeadTiles(player.getInverse(),index)
 
     def playTurnIndex(self, index, player):
-        valid = self.checkValidMove(index)  
+        inverse = player.getInverse()
+        valid = self.checkValidMove(index, inverse)  
         if valid:
             self.editTile(index,player.getValue())
-            self.removeDeadTiles(player.getInverse(),index)
-            return valid
+            self.removeDeadTiles(inverse,index)
+            if self.__board[index].center.value == player.value:
+                return True
+            return False
         return valid
     
     def resetBoard(self):
@@ -163,7 +162,7 @@ class board():
         self.oneDeadStone = False
         deadStones = 0 
         tiles = self.__board[location].getSuroundLocations()
-        # tiles += (location,) # i dont think this is needed
+        #tiles += (location,) # i dont think this is needed 
         for position in tiles:
             if position != "f":
                 if self.__board[position].center.value == player:
@@ -206,12 +205,28 @@ class board():
             self.__floodFill(x,y,"checked",BLANK)
         return self.noChangedTiles
             
-    def checkValidMove(self,position):
+    def checkValidMove(self,position,inverse):
+        if self.__checkSurounds(position, inverse):
+            return False
         if self.__board[position].center.value != BLANK:
             return False
-        elif self.__checkKo(position):
+        if self.__checkKo(position):
             return False
         return True
+    
+    # returns False if it IS a valid move
+    def __checkSurounds(self, position, inverse):
+        for i in self.__board[position].getSuroundLocations():
+            if i != "f":
+                val = self.__board[i].center.value
+                if val != inverse and val != BLANK:
+                    return self.__checkValidGroup(position, inverse)
+                if val != inverse:
+                    return False
+        return True
+    
+    def __checkValidGroup(self, position, inverse):
+        pass
     
     def __checkKo(self, position):
         if self.oneDeadStone and position == self.lastRemStoneLoc:
@@ -555,5 +570,27 @@ class game():
 
     
 if __name__ == "__main__":
-    main = game()
-    main.main()
+    #main = game()
+    #main.main()
+    play = stone()
+    play.setValue("x")
+    test = board()
+    test.resetBoard()
+    test.playTurnIndex(4,play)
+    test.playTurnIndex(12,play)
+    test.playTurnIndex(14,play)
+
+    play.invert()
+    test.playTurnIndex(13,play)
+
+    test.printBoard()
+    play.invert()
+    test.playTurnIndex(22,play)
+    test.printBoard()
+    test.playTurnIndex(8,play)
+    test.printBoard()
+    play.invert()
+    test.playTurnIndex(7,play)
+    test.playTurnIndex(17,play)
+    test.printBoard()
+    print(test.getBoard()[8].getSurounds(test.getBoard()))

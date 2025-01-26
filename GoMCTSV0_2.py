@@ -2,7 +2,7 @@ from basicImports import *
 from GoV6_1 import *
 import numpy as np
 import random as rnd
-
+import math
 
 class MCTS():
     def __init__(self):
@@ -13,26 +13,44 @@ class MCTS():
         # this is an arbitary value, size rounded up to the nearest 100 
         self.__simDepth = (-(self.__size // -100))*100 # use 10 for tests
         self.__path = []
+        self.__depth = 0
+
+    def setDepth(self,depth):
+        self.__depth = depth
 
     def __startTree(self):
         self.__tree = node(self.__size, self.__player, self.__player, False)
 
     def getBestMove(self):
         self.__startTree()
-        for x in range(40):
-            self.__tree.addChild(x)
-        end = self.selection()
-        self.simulation(end)
-        print(end.getLastChild().getScore())
-        print(end.getLastChild().getBoard().printBoard())
-        print(end.getChildren()[0].getScore())
+        for x in range(10):
+            end = self.selection()
+            moves, num = end.getAllMoves()
+            move = moves[rnd.randint(0, (len(moves) - 1))]
+            end.addChild(move)
+            self.__path.append(end.getChildren()[-1])
+
+            self.simulation(self.__path[-1])
+
+            self.backpropogation()
+        
+        print(self.__tree.getBestMove())
+
+        # self.__startTree()
+        # for x in range(40):
+        #     self.__tree.addChild(x)
+        # end = self.selection()
+        # self.simulation(end)
+        # print(end.getLastChild().getScore())
+        # print(end.getLastChild().getBoard().printBoard())
+        # print(end.getChildren()[0].getScore())
 
     def selection(self):
-        depth = 0
+        self.__depth = 0
         current = self.__tree
         while True:
             self.__path.append(current)
-            if depth > self.__maxSearchDepth:
+            if self.__depth > self.__maxSearchDepth:
                 return current
             childNum = rnd.randint(0,self.__size)
             if childNum >= current.getNumChildren():
@@ -40,21 +58,42 @@ class MCTS():
             else:
                 new = current.getChildren()[childNum]
                 current = new
-            depth += 1
+            self.__depth += 1
     
     def simulation(self,node):
         node.addCopyChild()
         sim = node.getLastChild()
         for x in range(self.__simDepth):
-            moves, num = node.getAllMoves()
-            move = moves[rnd.randint(0, (len(moves) - 1))]
-            sim.setLocation(move)
-            sim.invertPlayer()
-            # sim.printBoard() # for tests
+            moves, num = sim.getAllMoves() # this was node.bla in v0-1
+            move = moves[rnd.randint(0, num - 1)]
+            valid = sim.setLocation(move)
+            if valid:
+                sim.invertPlayer()
+            input()
+            sim.printBoard()
         sim.setScore(sim.getBoard().getScore(self.__player))
     
     def backpropogation(self):
-        pass
+        for count in range((self.__depth - 1),-1,-1):
+            current = self.__path[count]
+            children = current.getChildren()
+            t = 0
+            score = 0
+            for child in children:
+                t += 1
+                score += child.getScore()
+            
+            current.setScore((score/t) + (math.sqrt((2*math.log(t))/score)))
+
+    def calculateUCB(self,node):
+        children = node.getChildren()
+        t = 0
+        score = 0
+        for child in children:
+            t += 1
+            score += child.getScore()
+        
+        node.setScore((score/t) + (math.sqrt((2*math.log(t))/score)))
 
 class node():
     def __init__(self, size, player, root, isMax):
@@ -114,9 +153,6 @@ class node():
     def printBoard(self):
         self.__board.printBoard()
 
-    def setLeaf(self, val):
-        self.__isLeaf = val
-
     def setPlayer(self,player):
         self.__player.setValue(player)
     
@@ -124,8 +160,11 @@ class node():
         self.__board.setBoard(new)
 
     def setLocation(self, loc):
-        self.__board.playTurnIndex(loc, self.__player)
+        valid = self.__board.playTurnIndex(loc, self.__player)
         self.__move = loc
+        if not(valid):
+            print("invalid", loc)
+        return valid
 
     def setScore(self,val):
         self.__score = val
