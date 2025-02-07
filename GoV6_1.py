@@ -56,14 +56,16 @@ class board():
 
     def playTurnIndex(self, index, player):
         inverse = player.getInverse()
+        playerVal = player.getValue()
         valid = self.checkValidMove(index, inverse)  
         if valid:
-            self.editTile(index,player.getValue())
+            self.editTile(index,playerVal)
             self.removeDeadTiles(inverse,index)
+            self.removeSingleDeadTile(playerVal,index)
             if self.__board[index].center.value == player.value:
                 return True
             return False
-        return valid
+        return False
     
     def resetBoard(self):
         self.size = self.length * self.length
@@ -173,6 +175,16 @@ class board():
                         deadStones = self.removeDeadTile(position)
 
         self.__updateDeadStones(player,deadStones)
+    
+    def removeSingleDeadTile(self,player,location):
+        isGroup = self.checkIfGroup(location,player)
+        if isGroup:
+            y,x = divmod(location,self.length)
+            newGroup = group(self.__board, location, self.length)
+            newGroup.checkIfGroupAlive(x, y, player, "checked")
+            self.__floodFill(x,y,"checked",player)
+            if not(newGroup.alive):
+                self.__board[location].center.value = BLANK
 
     def __updateDeadStones(self,player,noDead):
         if player == "x":
@@ -193,7 +205,7 @@ class board():
             return 1
         return 0
     
-    def removeDeadGroup(self,player,position):
+    def removeDeadGroup(self,player,position): # check if it returns correct number of dead stones!!
         self.noChangedTiles = 0
         y,x = divmod(position,self.length)
         newGroup = group(self.__board, position, self.length)
@@ -217,16 +229,9 @@ class board():
     # returns False if it IS a valid move
     def __checkSurounds(self, position, inverse):
         for i in self.__board[position].getSuroundLocations():
-            if i != "f":
-                val = self.__board[i].center.value
-                if val != inverse and val != BLANK:
-                    return self.__checkValidGroup(position, inverse)
-                if val != inverse:
-                    return False
+            if i != "f" and self.__board[i].center.value != inverse:
+                return False
         return True
-    
-    def __checkValidGroup(self, position, inverse):
-        pass
     
     def __checkKo(self, position):
         if self.oneDeadStone and position == self.lastRemStoneLoc:
@@ -375,10 +380,11 @@ class group():
         currentValue = self.board[(x+(y*self.length))].center.value
         if currentValue != targetCounter or self.alive:
             return
-        
-        self.board[(x+(y*self.length))].center.value = replacmentCounter
-        
-        surounds = self.board[(x+(y*self.length))].getSurounds(self.board)
+    
+        surounds = self.board[(x+(y*self.length))].getSurounds(self.board) # previous versions had this 
+
+        self.board[(x+(y*self.length))].center.value = replacmentCounter   # and this line the other way round which caused an error when checking tiles on the edge of the board
+
         if BLANK in surounds:
             self.alive = True
         if (x+1) < self.length:
@@ -576,21 +582,15 @@ if __name__ == "__main__":
     play.setValue("x")
     test = board()
     test.resetBoard()
-    test.playTurnIndex(4,play)
-    test.playTurnIndex(12,play)
-    test.playTurnIndex(14,play)
+
+    test.playTurnIndex(1,play)
+    test.playTurnIndex(10,play)
+    test.playTurnIndex(18,play)
 
     play.invert()
-    test.playTurnIndex(13,play)
 
+    test.playTurnIndex(9,play)
     test.printBoard()
-    play.invert()
-    test.playTurnIndex(22,play)
-    test.printBoard()
-    test.playTurnIndex(8,play)
-    test.printBoard()
-    play.invert()
-    test.playTurnIndex(7,play)
-    test.playTurnIndex(17,play)
-    test.printBoard()
-    print(test.getBoard()[8].getSurounds(test.getBoard()))
+    print(test.playTurnIndex(0,play))
+    test.printBoard()             # for testing stone validation on the edge
+

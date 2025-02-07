@@ -23,7 +23,7 @@ class MCTS():
 
     def getBestMove(self):
         self.__startTree()
-        for x in range(10):
+        for x in range(50):
             end = self.selection()
             moves, num = end.getAllMoves()
             move = moves[rnd.randint(0, (len(moves) - 1))]
@@ -69,26 +69,25 @@ class MCTS():
             valid = sim.setLocation(move)
             if valid:
                 sim.invertPlayer()
-            input()
-            sim.printBoard()
-        sim.setScore(sim.getBoard().getScore(self.__player))
-    
+            #input() # used for bug testing to allow for the program to be steped through
+            #sim.printBoard() # used for bug testing
+
     def backpropogation(self):
         for count in range((self.__depth - 1),-1,-1):
             current = self.__path[count]
             children = current.getChildren()
             t = 0
-            score = 0
+            score = 0.01
             for child in children:
                 t += 1
                 score += child.getScore()
             
             current.setScore((score/t) + (math.sqrt((2*math.log(t))/score)))
 
-    def calculateUCB(self,node):
+    def calculateUCB(self,node): # not used since it is a fairly simple procces to minmise function calls
         children = node.getChildren()
         t = 0
-        score = 0
+        score = 0.01 # this stops any div 0 errors
         for child in children:
             t += 1
             score += child.getScore()
@@ -162,8 +161,8 @@ class node():
     def setLocation(self, loc):
         valid = self.__board.playTurnIndex(loc, self.__player)
         self.__move = loc
-        if not(valid):
-            print("invalid", loc)
+        # if not(valid):
+            # print("invalid", loc) # used for bug testing
         return valid
 
     def setScore(self,val):
@@ -187,4 +186,5 @@ class node():
 
 if __name__ == "__main__":
     test = MCTS()
-    test.getBestMove()
+    for abc in range(1):
+        test.getBestMove()
