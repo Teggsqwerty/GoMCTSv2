@@ -16,9 +16,9 @@ class rootWindow():
 
         self.__window = mainWindow(self.__cont, TOP)
 
-# class mainMenu():
-#     def __init__(self, parent):
-
+    def proccess(self):
+        self.__bar.proccess()
+        self.__window.proccess()
 
 class topBar():
     def __init__(self, parent, direction):
@@ -47,6 +47,9 @@ class topBar():
     def gameMenuHandler(self, option):
         print(option.get())
         option.set("Game")
+    
+    def proccess(self):
+        pass
 
 
 class mainWindow():
@@ -56,6 +59,10 @@ class mainWindow():
 
         self.__statsBar = stats(self.__cont, RIGHT)
         self.__gameWindow = game(self.__cont, RIGHT)
+    
+    def proccess(self):
+        stats = self.__gameWindow.proccess()
+        self.__statsBar.proccess(stats)
         
 
 class stats():
@@ -71,7 +78,7 @@ class stats():
         self.__numNodesLab.pack(side = TOP)
 
         self.__winProb = 0 
-        self.__winProbLab = Label(self.__cont, text = f"probibility of winning:\n{self.__winProb}", font = FONT, width = self.__width, height = self.__height)
+        self.__winProbLab = Label(self.__cont, text = f"last minimax score:\n{self.__winProb}", font = FONT, width = self.__width, height = self.__height)
         self.__winProbLab.pack(side = TOP)
         
         self.__maxDepth = 0 
@@ -83,13 +90,22 @@ class stats():
         self.__maxBreadthLab.pack(side = TOP)
 
         self.__time = 0 
-        self.__timeLab = Label(self.__cont, text = f"time taken:\n{self.__maxBreadth} (s)", font = FONT, width = self.__width, height = self.__height)
+        self.__timeLab = Label(self.__cont, text = f"time taken:\n{self.__time} (ns)", font = FONT, width = self.__width, height = self.__height)
         self.__timeLab.pack(side = TOP)
 
         self.__winning = "player 1"
         self.__winningLab = Label(self.__cont, text = f"currently winning:\n{self.__winning}", font = FONT, width = self.__width, height = self.__height)
         self.__winningLab.pack(side = TOP)
     
+    def proccess(self,stats):
+        if stats != None:
+            self.__maxBreadth, self.__maxDepth, self.__numNodes, self.__time, self.__winProb = stats
+            self.__numNodesLab.configure(text = f"number of nodes:\n{self.__numNodes}")
+            self.__winProbLab.configure(text = f"last minimax score:\n{self.__winProb}")
+            self.__maxDepthLab.configure(text = f"max search depth:\n{self.__maxDepth}")
+            self.__maxBreadthLab.configure(text = f"max search breadth:\n{self.__maxBreadth}")
+            self.__timeLab.configure(text = f"time taken:\n{self.__time} (ns)")
+
     def setNumNodes(self,val):
         self.__numNodes = val
 
@@ -114,7 +130,10 @@ class game():
         self.__cont = Frame(parent, padx = 15)
         self.__cont.pack(side = direction)
 
-        self.__test = goBoard(self.__cont)
+        self.__test = NCBoard(self.__cont)
+    
+    def proccess(self):
+        return self.__test.proccess()
         
 
 class goBoard():
@@ -177,6 +196,7 @@ class NCBoard():
         
         self.__board = NC.NandC()
 
+        self.__buff = ring()
         self.__initBoard()
 
     def __initBoard(self):
@@ -193,9 +213,16 @@ class NCBoard():
         widget = event.widget
         x = widget.grid_info()['row']
         y = widget.grid_info()["column"]
-        text = self.__board.proccesing(x,y)
-        self.__infoBar.configure(text = text)
-        self.__updateGUI()
+        success = self.__buff.push((x,y))
+    
+    def proccess(self):
+        event = self.__buff.pop()
+        if event != False:
+            x,y = event
+            text = self.__board.proccesing(x,y)
+            self.__infoBar.configure(text = text)
+            self.__updateGUI()
+            return self.__board.getStats()
     
     def __updateGUI(self):
         board = self.__board.getBoard()
@@ -209,6 +236,41 @@ class NCBoard():
                     self.__displayBoard[y][x].configure(image = self.__blank)
     
 
+class ring():
+    """ ring buffer for use with the ISRs"""
+    def __init__(self):
+        self.__buffer = [None for _ in range(256)]
+        self.__rdptr = 0
+        self.__wrptr = 0
+
+    def push(self,val):
+        if not(self.isFull()):
+            self.__buffer[self.__wrptr] = val
+            self.__wrptr += 1
+            return True
+        else:
+            return False
+    
+    def pop(self):
+        if not(self.isEmpty()):
+            val = self.__buffer[self.__rdptr]
+            self.__rdptr += 1
+            return val
+        else:
+            return False
+
+    def isEmpty(self):
+        if self.__wrptr == self.__rdptr:
+            return True
+        return False
+    
+    def isFull(self):
+        if self.__wrptr == (self.__rdptr - 1):
+            return True
+        if self.__wrptr == 255 and self.__rdptr == 0:
+            return True
+        return False
+
 if __name__ == "__main__":
     width = 1200
     height = 900
@@ -216,12 +278,12 @@ if __name__ == "__main__":
     main.resizable(0,0)
     #main.geometry(f"{width}x{height}")
     main.title("Go Compare")
-    test = rootWindow(main)
-    main.mainloop()
-    # exists = True
-    # while exists:
-    #     main.update()
-    #     try:
-    #         main.winfo_exists()
-    #     except:
-    #         exists = False
+    test = mainWindow(main,TOP)
+    exists = True
+    while exists:
+        test.proccess()
+        main.update()
+        try:
+            main.winfo_exists()
+        except:
+            exists = False

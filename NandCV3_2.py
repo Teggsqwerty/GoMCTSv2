@@ -1,4 +1,5 @@
 from basicImports import *
+import time
 
 class board():
     def __init__(self):
@@ -191,33 +192,129 @@ class measure():
         self.__maxSpan = 0
         self.__maxDepth = 0
         self.__noNodes = 0
+        self.__timeTaken = 0
         self.__depths = [0,0,0,0,0,0,0,0,0,0]
+    
+    def measureTree(self,node):
+        self.__maxSpan = 0
+        self.__maxDepth = 0
+        self.__noNodes = 0
+        self.__timeTaken = 0
+        self.__score = 0
+        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+        self.__measure(node,0)
+        for x in self.__depths:
+            if x > self.__maxSpan:
+                self.__maxSpan = x
+            if x != 0:
+                self.__maxDepth += 1
 
-    def measureTree(self, node, depth):
+    def __measure(self, node, depth):
         self.__noNodes += 1
         self.__depths[depth] += 1
         children = node.getChildren()
         for child in children:
-            self.measureTree(child,(depth + 1))
+            self.__measure(child,(depth + 1))
+    
+    def setScore(self,val):
+        self.__score = val
+
+    def setTime(self,val):
+        self.__timeTaken = val
         
-    def getDepths(self):
-        return self.__depths
+    def getStats(self):
+        return self.__maxSpan, self.__maxDepth, self.__noNodes, self.__timeTaken, self.__score
             
 class NandC():
     def __init__(self):
         self.__board = board()
+        self.__measure = measure()
         self.__user = "x"
-        self.__singlePlayer = False
+        self.__Xhuman = True
+        self.__Ohuman = False
         self.__score = [0,0] # [x,o]
+        self.__finished = False
 
-    def GUISinglePlayer(self,x,y):
-        pass
+    def reset(self, X,O):
+        self.__board.resetGame()
+        self.__Xhuman = X
+        self.__Ohuman = O
+        self.__user = "x"
+        self.__finished = False
 
-    def GUITwoPlayer(self,x,y):
+    def getStats(self):
+        return self.__measure.getStats()
+
+    def proccesing(self,x,y):
+        if self.__finished:
+            self.reset(self.__Xhuman, self.__Ohuman)
+            if not(self.__Xhuman) and not(self.__Ohuman):
+                return "click for next move"
+            else:
+                return "can player 1 (X) please play"
+        elif not(self.__Xhuman) and not(self.__Ohuman):
+            return self.__GUIZeroPlayer()
+        elif not(self.__Xhuman) and self.__Ohuman:
+            return self.__GUIOnePlayerO(x,y)
+        elif self.__Xhuman and not(self.__Ohuman):
+            return self.__GUIOnePlayerX(x,y)
+        elif self.__Xhuman and self.__Ohuman:
+            return self.__GUITwoPlayer(x,y)
+    
+    def __GUITwoPlayer(self,x,y):
+        message, valid, self.__finished = self.__userTurn(x,y)
+        return message
+    
+    def __GUIOnePlayerX(self,x,y): # X is human
+        message, valid, self.__finished = self.__userTurn(x,y)
+        if not(valid):
+            return message
+        elif self.__finished:
+            return message
+        else:
+            x,y = self.__getComputerMove()
+            self.__finished, winner = self.__board.playTurn(x,y,"o")
+            if self.__finished:
+                if winner == "x":
+                    message = "player 1 (X) has won!\nclick any button to reset"
+                    self.__score[0] += 1
+                elif winner == "o":
+                    message = "player 2 (O) has won!\nclick any button to reset"
+                    self.__score[1] += 1
+                elif winner == BLANK:
+                    message = "draw! both sides win 1/2 a point\nclick any tile to reset"
+                    self.__score[0] += 0.5
+                    self.__score[1] += 0.5
+            else:
+                message = "can player 1 (X) please play"
+                self.__user = "x"
+            return message
+    
+    def __GUIOnePlayerO(self,x,y): # O is human
         pass
     
-    def GUIZeroPlayer(self):
-        pass
+    def __GUIZeroPlayer(self):
+        message = "click for next move"
+        x,y = self.__getComputerMove()
+        if self.__user == "x":
+            self.__finished, winner = self.__board.playTurn(x,y,"o")
+        else:
+            self.__finished, winner = self.__board.playTurn(x,y,"x")
+        if self.__finished:
+            if winner == "x":
+                message = "player 1 (X) has won!\nclick any button to reset"
+                self.__score[0] += 1
+            elif winner == "o":
+                message = "player 2 (O) has won!\nclick any button to reset"
+                self.__score[1] += 1
+            elif winner == BLANK:
+                message = "draw! both sides win 1/2 a point\nclick any tile to reset"
+                self.__score[0] += 0.5
+                self.__score[1] += 0.5
+        return message
+    
+    def getBoard(self):
+        return self.__board.getBoard()
     
     def __userTurn(self,x,y):
         valid = self.__board.checkValidLocation(x,y)
@@ -262,25 +359,19 @@ class NandC():
         print("\n\n" + message)
         self.__board.resetGame()
 
-    def __getAiMove(self):
-        calc = measure()
+    def __getComputerMove(self):
         if self.__user == "x":
             self.__user = "o"
-            test = node(self.__user,False,self.__user)
-            test.setBoard(self.__board.getBoard())
-            test.minimax()
-            calc.measureTree(test,0)
-            print(calc.getDepths())
-            x,y = test.getBestMove()
         else:
             self.__user = "x"
-            test = node(self.__user,False,self.__user)
-            test.setBoard(self.__board.getBoard())
-            test.minimax()
-            calc.measureTree(test,0)
-            print(calc.getDepths())
-            x,y = test.getBestMove()
-            
+        test = node(self.__user,False,self.__user)
+        test.setBoard(self.__board.getBoard())
+        start = time.perf_counter_ns()
+        self.__measure.setScore(test.minimax())
+        end   = time.perf_counter_ns()
+        x,y = test.getBestMove()
+        self.__measure.measureTree(test)
+        self.__measure.setTime(end - start)
         return x,y
     
     def playAIGame(self):
@@ -289,7 +380,7 @@ class NandC():
         finished = False
         while not(finished):
             self.__board.printBoard()
-            x,y = self.__getAiMove()
+            x,y = self.__getComputerMove()
             if self.__user == "x":
                 finished, winner = self.__board.playTurn(x,y,"o")
             else:
