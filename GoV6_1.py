@@ -25,7 +25,7 @@ class board():
         self.lastRemStoneLoc = -1 # index position rather than cartesian
 
         # used to count no of changed tiles in the flood fill 
-        self.noChangedTiles = 0
+        self.__noChangedTiles = 0
 
         # reset before a game
         self.resetBoard()
@@ -205,17 +205,17 @@ class board():
             return 1
         return 0
     
-    def removeDeadGroup(self,player,position): # check if it returns correct number of dead stones!!
-        self.noChangedTiles = 0
+    def removeDeadGroup(self,player,position):
+        self.__noChangedTiles = 0
         y,x = divmod(position,self.length)
         newGroup = group(self.__board, position, self.length)
         newGroup.checkIfGroupAlive(x, y, player, "checked")
         if newGroup.alive:
             self.__floodFill(x,y,"checked",player)
-            self.noChangedTiles = 0
+            self.__noChangedTiles = 0
         else:
             self.__floodFill(x,y,"checked",BLANK)
-        return self.noChangedTiles
+        return self.__noChangedTiles
             
     def checkValidMove(self,position,inverse):
         if self.__checkSurounds(position, inverse):
@@ -271,7 +271,7 @@ class board():
             return
         
         self.__board[(x+(y*self.length))].center.value = replacmentCounter
-        self.noChangedTiles += 1
+        self.__noChangedTiles += 1
 
         if (x+1) < self.length:
             self.__floodFill((x+1),y,targetCounter,replacmentCounter) # go right

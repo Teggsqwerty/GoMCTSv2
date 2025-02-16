@@ -25,7 +25,7 @@ class topBar():
         self.__cont = Frame(parent, highlightbackground = "black", highlightthickness = 3)
         self.__cont.pack(side = direction, anchor = W, pady = 5)
     
-        self.__fileOptions = ["Main menu", "Save game", "Load game (step through)","Load game (outcome)"]
+        self.__fileOptions = ["Save game", "Load game (step through)","Load game (outcome)"]
         self.__selectedFileOption = StringVar(value = "File")
 
         self.__file = OptionMenu(self.__cont, self.__selectedFileOption, *self.__fileOptions, command = lambda option: self.fileMenuHandler(self.__selectedFileOption))

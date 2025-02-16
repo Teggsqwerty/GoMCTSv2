@@ -1,5 +1,43 @@
 BLANK = ""
 
+class measure():
+    def __init__(self):
+        self.__maxSpan = 0
+        self.__maxDepth = 0
+        self.__noNodes = 0
+        self.__timeTaken = 0
+        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+    
+    def measureTree(self,node):
+        self.__maxSpan = 0
+        self.__maxDepth = 0
+        self.__noNodes = 0
+        self.__timeTaken = 0
+        self.__score = 0
+        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+        self.__measure(node,0)
+        for x in self.__depths:
+            if x > self.__maxSpan:
+                self.__maxSpan = x
+            if x != 0:
+                self.__maxDepth += 1
+
+    def __measure(self, node, depth):
+        self.__noNodes += 1
+        self.__depths[depth] += 1
+        children = node.getChildren()
+        for child in children:
+            self.__measure(child,(depth + 1))
+    
+    def setScore(self,val):
+        self.__score = val
+
+    def setTime(self,val):
+        self.__timeTaken = val
+        
+    def getStats(self):
+        return self.__maxSpan, self.__maxDepth, self.__noNodes, self.__timeTaken, self.__score
+
 class stone():
     def __init__(self):
         self.value = BLANK
