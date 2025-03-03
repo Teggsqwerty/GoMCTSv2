@@ -191,38 +191,53 @@ class NandC():
     def __init__(self):
         self.__board = board()
         self.__measure = measure()
-        self.__user = "x"
-        self.__Xhuman = True
-        self.__Ohuman = False
-        self.__score = [0,0] # [x,o]
-        self.__finished = False
 
-    def reset(self, X,O):
+        self.__init(True,False)
+
+    def __init(self, X,O):
         self.__board.resetGame()
         self.__Xhuman = X
         self.__Ohuman = O
         self.__user = "x"
         self.__finished = False
+        self.__score = [0,0] # [x,o]
+
+    def reset(self):
+        self.__board.resetGame()
+        self.__finished = False
+        self.__user = "x"
+
+    def setPlayer1(self,val):
+        self.__Xhuman = val
+        print(self.__Xhuman, self.__Ohuman)
+
+    def setPlayer2(self,val):
+        self.__Ohuman = val
+        print(self.__Xhuman, self.__Ohuman)
 
     def getStats(self):
         return self.__measure.getStats()
 
     def proccesing(self,x,y):
         if self.__finished:
-            self.reset(self.__Xhuman, self.__Ohuman)
+            self.__init(self.__Xhuman, self.__Ohuman)
             if not(self.__Xhuman) and not(self.__Ohuman):
-                return "click for next move"
+                message =  "click for next move"
             else:
-                return "can player 1 (X) please play"
+                message = "can player 1 (X) please play"
+        
         elif not(self.__Xhuman) and not(self.__Ohuman):
-            return self.__GUIZeroPlayer()
+            message = self.__GUIZeroPlayer()
         elif not(self.__Xhuman) and self.__Ohuman:
-            return self.__GUIOnePlayerO(x,y)
+            message = self.__GUIOnePlayerO(x,y)
         elif self.__Xhuman and not(self.__Ohuman):
-            return self.__GUIOnePlayerX(x,y)
+            message = self.__GUIOnePlayerX(x,y)
         elif self.__Xhuman and self.__Ohuman:
-            return self.__GUITwoPlayer(x,y)
-    
+            message = self.__GUITwoPlayer(x,y)
+            
+        
+        return message
+
     def __GUITwoPlayer(self,x,y):
         message, valid, self.__finished = self.__userTurn(x,y)
         return message
@@ -253,7 +268,24 @@ class NandC():
             return message
     
     def __GUIOnePlayerO(self,x,y): # O is human
-        pass
+        if self.__user == "x":
+            x,y = self.__getComputerMove()
+            self.__finished, winner = self.__board.playTurn(x,y,"x")
+            if self.__finished:
+                if winner == BLANK:
+                    message = "draw! both sides win 1/2 a point\nclick any tile to reset"
+                    self.__score[0] += 0.5
+                    self.__score[1] += 0.5
+                else:
+                    message = "player 1 (X) has won!\nclick any button to reset"
+                    self.__score[0] += 1
+            else:
+                message = "can player 2 (O) please play"
+        else:
+            message, valid, self.__finished = self.__userTurn(x,y)
+            if valid:
+                message = "click for next move"
+        return message
     
     def __GUIZeroPlayer(self):
         message = "click for next move"

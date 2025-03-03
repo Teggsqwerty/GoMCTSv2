@@ -2,19 +2,20 @@ BLANK = ""
 
 class measure():
     def __init__(self):
-        self.__maxSpan = 0
-        self.__maxDepth = 0
-        self.__noNodes = 0
+        self.__maxSpan   = 0
+        self.__maxDepth  = 0
+        self.__noNodes   = 0
         self.__timeTaken = 0
-        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+        self.__score     = 0
+        self.__depths    = [0,0,0,0,0,0,0,0,0,0]
     
     def measureTree(self,node):
-        self.__maxSpan = 0
-        self.__maxDepth = 0
-        self.__noNodes = 0
+        self.__maxSpan   = 0
+        self.__maxDepth  = 0
+        self.__noNodes   = 0
         self.__timeTaken = 0
-        self.__score = 0
-        self.__depths = [0,0,0,0,0,0,0,0,0,0]
+        self.__score     = 0
+        self.__depths    = [0,0,0,0,0,0,0,0,0,0]
         self.__measure(node,0)
         for x in self.__depths:
             if x > self.__maxSpan:

@@ -1,6 +1,5 @@
-import GoV6_1 as Go
-import NandCV3_2 as NC
-import GoMCTSV0_2 as MCTS
+import NandCV4_0 as NC
+import GoMCTSV1_0 as GO
 
 from tkinter import *
 
@@ -17,8 +16,9 @@ class rootWindow():
         self.__window = mainWindow(self.__cont, TOP)
 
     def proccess(self):
-        self.__bar.proccess()
-        self.__window.proccess()
+        topBarChoice = self.__bar.proccess()
+        options = self.__window.proccess(topBarChoice)
+        self.__bar.setGameOptions(options)
 
 class topBar():
     def __init__(self, parent, direction):
@@ -31,27 +31,38 @@ class topBar():
         self.__file = OptionMenu(self.__cont, self.__selectedFileOption, *self.__fileOptions, command = lambda option: self.fileMenuHandler(self.__selectedFileOption))
         self.__file.pack(side = LEFT)
 
-        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Computer","Computer delay: 30ms"]
+        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Computer","Computer delay: 30ms","Switch Game"]
         self.__selectedGameOption = StringVar(value = "Game")
 
+        self.__initGameOptions()
+        self.__buff = ring()
+
+    def __initGameOptions(self):
         self.__game = OptionMenu(self.__cont, self.__selectedGameOption, *self.__gameOptions, command = lambda option: self.gameMenuHandler(self.__selectedGameOption))
         self.__game.pack(side = LEFT)
 
         self.__fill = Label(self.__cont, width = 70)
         self.__fill.pack(side = LEFT)
 
+    def setGameOptions(self,options):
+        self.__gameOptions = options
+        self.__game.destroy()
+        self.__fill.destroy()
+        self.__initGameOptions()
+
     def fileMenuHandler(self, option):
-        print(option.get())
+        #print(option.get())
+        self.__buff.push(option.get())
         option.set("File")
     
     def gameMenuHandler(self, option):
-        print(option.get())
+        #print(option.get())
+        self.__buff.push(option.get())
         option.set("Game")
     
     def proccess(self):
-        pass
-
-
+        return self.__buff.pop()
+        
 class mainWindow():
     def __init__(self, parent, direction):
         self.__cont = Frame(parent)
@@ -60,10 +71,10 @@ class mainWindow():
         self.__statsBar = stats(self.__cont, RIGHT)
         self.__gameWindow = game(self.__cont, RIGHT)
     
-    def proccess(self):
-        stats = self.__gameWindow.proccess()
+    def proccess(self, topBarChoice):
+        stats, options = self.__gameWindow.proccess(topBarChoice)
         self.__statsBar.proccess(stats)
-        
+        return options
 
 class stats():
     def __init__(self, parent, direction):
@@ -130,10 +141,35 @@ class game():
         self.__cont = Frame(parent, padx = 15)
         self.__cont.pack(side = direction)
 
-        self.__test = NCBoard(self.__cont)
-    
-    def proccess(self):
-        return self.__test.proccess()
+        self.__isGo = True
+        self.__game = goBoard(self.__cont)
+
+        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Computer","Computer delay: 30ms","Switch Game"]
+
+    def proccess(self,topBarChoice):
+        if topBarChoice == False:
+            pass
+        elif topBarChoice == "Player 1: Human":
+            self.__game.setPlayer1(False)
+            self.__gameOptions[1] = "Player 1: Computer"
+        elif topBarChoice == "Player 1: Computer":
+            self.__game.setPlayer1(True)
+            self.__gameOptions[1] = "Player 2: Human"
+        elif topBarChoice == "Player 2: Human":
+            self.__game.setPlayer2(False)
+            self.__gameOptions[2] = "Player 2: Computer"
+        elif topBarChoice == "Player 2: Computer":
+            self.__game.setPlayer2(True)
+            self.__gameOptions[2] = "Player 2: Human"
+        elif topBarChoice == "Switch Game" and self.__isGo:
+            self.__game.destroy()
+            self.__isGo = False
+            self.__game = NCBoard(self.__cont)
+        elif topBarChoice == "Switch Game":
+            self.__game.destroy()
+            self.__isGo = True
+            self.__game = goBoard(self.__cont)
+        return self.__game.proccess(topBarChoice), self.__gameOptions
         
 
 class goBoard():
@@ -142,10 +178,15 @@ class goBoard():
         self.__cont.pack()
 
         self.__size = 9
+        
+        self.__board = GO.GO()
 
-        self.__initBoard()
+        self.__buff = ring()
 
-    def __initBoard(self):
+        self.init()
+        
+    def init(self):
+        self.__board.reset()
         if self.__size <= 10:
             self.__width = 70
         elif self.__size <= 13:
@@ -166,24 +207,56 @@ class goBoard():
                 self.__displayBoard[y][x].grid(row = x, column = y)
                 self.__displayBoard[y][x].bind("<Button-1>", self.__click)
 
+        self.__infoBar = Label(self.__cont, text = "can player 1 (X) please play", font = ("Arial",18))
+        self.__infoBar.grid(row = (self.__size+1), column = 0, pady = 5, columnspan = self.__size)
+
+    def setPlayer1(self,val):
+        self.__board.setPlayer1(val)
+
+    def setPlayer2(self,val):
+        self.__board.setPlayer2(val)
+
     def __click(self,event):
         widget = event.widget
         x = widget.grid_info()['row']
         y = widget.grid_info()["column"]
-        print(x,y)
-        # text = self.proccess()
-        # self.__updateGUI()
-        
+        success = self.__buff.push((x,y))
     
-    # def __updateGUI(self):
-    #     for y in range(3):
-    #         for x in range(3):
-    #             if self.board.board[y][x] == "o":
-    #                 self.displayBoard[y][x].configure(image = self.__naught)
-    #             elif self.board.board[y][x] == "x":
-    #                 self.displayBoard[y][x].configure(image = self.__cross)
-    #             else:
-    #                 self.displayBoard[y][x].configure(image = self.__blank)
+    def __clear(self):
+        self.__board.reset()
+        self.__infoBar.configure(text = "can player 1 (X) please play")
+        for y in range(self.__size):
+            for x in range(self.__size):
+                self.__displayBoard[y][x].configure(image = self.__blank)
+
+    def proccess(self,topOpt):
+        if topOpt != False:
+            if topOpt == "Clear Board":
+                self.__clear()
+        event = self.__buff.pop()
+        if event != False:
+            x,y = event
+            text = self.__board.proccesing(x,y)
+            self.__infoBar.configure(text = text)
+            self.__updateGUI()
+            #return self.__board.getStats()
+    
+    def __updateGUI(self):
+        board = self.__board.getBoard()
+    
+        for y in range(self.__size):
+            for x in range(self.__size):
+                index = (y*self.__size) + x
+                if board[index].center.getValue() == "o":
+                    self.__displayBoard[y][x].configure(image = self.__black)
+                elif board[index].center.getValue() == "x":
+                    self.__displayBoard[y][x].configure(image = self.__white)
+                else:
+                    self.__displayBoard[y][x].configure(image = self.__blank)
+
+    def destroy(self):
+        self.__cont.destroy()
+        self.__infoBar.destroy()
 
 class NCBoard():
     def __init__(self, parent):
@@ -200,6 +273,7 @@ class NCBoard():
         self.__initBoard()
 
     def __initBoard(self):
+        self.__board.reset()
         self.__displayBoard = [[Button(self.__cont, image = self.__blank, highlightthickness = 0, bd = 0) for x in range(3)] for y in range(3)]
         for y in range(3):
             for x in range(3):
@@ -208,6 +282,19 @@ class NCBoard():
         
         self.__infoBar = Label(self.__cont, text = "can player 1 (X) please play", font = ("Arial",18))
         self.__infoBar.grid(row = 3, column = 0, pady = 5, columnspan = 3)
+    
+    def setPlayer1(self,val):
+        self.__board.setPlayer1(val)
+
+    def setPlayer2(self,val):
+        self.__board.setPlayer2(val)
+
+    def __clear(self):
+        self.__board.reset()
+        self.__infoBar.configure(text = "can player 1 (X) please play")
+        for y in range(3):
+            for x in range(3):
+                self.__displayBoard[y][x].configure(image = self.__blank)
 
     def __click(self,event):
         widget = event.widget
@@ -215,7 +302,10 @@ class NCBoard():
         y = widget.grid_info()["column"]
         success = self.__buff.push((x,y))
     
-    def proccess(self):
+    def proccess(self,topOpt):
+        if topOpt != False:
+            if topOpt == "Clear Board":
+                self.__clear()
         event = self.__buff.pop()
         if event != False:
             x,y = event
@@ -235,6 +325,9 @@ class NCBoard():
                 else:
                     self.__displayBoard[y][x].configure(image = self.__blank)
     
+    def destroy(self):
+        self.__cont.destroy()
+        self.__infoBar.destroy()
 
 class ring():
     """ ring buffer for use with the ISRs"""
@@ -278,7 +371,7 @@ if __name__ == "__main__":
     main.resizable(0,0)
     #main.geometry(f"{width}x{height}")
     main.title("Go Compare")
-    test = mainWindow(main,TOP)
+    test = rootWindow(main)
     exists = True
     while exists:
         test.proccess()

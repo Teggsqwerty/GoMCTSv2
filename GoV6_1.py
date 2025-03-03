@@ -49,12 +49,21 @@ class board():
             else:
                 self.__board[x].center.value = BLANK
 
-    def playTurn(self, x, y, player):
+    def playTurn(self, x, y, player): # returns wether or not the move was valid
         index = (y*self.length) + x
-        self.editTile(index,player.getValue())
-        self.removeDeadTiles(player.getInverse(),index)
+        inverse = player.getInverse()
+        playerVal = player.getValue()
+        valid = self.checkValidMove(index, inverse)  
+        if valid:
+            self.editTile(index,playerVal)
+            self.removeDeadTiles(inverse,index)
+            self.removeSingleDeadTile(playerVal,index)
+            if self.__board[index].center.value == player.value:
+                return True
+            return False
+        return False
 
-    def playTurnIndex(self, index, player):
+    def playTurnIndex(self, index, player): # returns wether or not the move was valid
         inverse = player.getInverse()
         playerVal = player.getValue()
         valid = self.checkValidMove(index, inverse)  
@@ -396,7 +405,7 @@ class group():
         if y != 0:
             self.checkIfGroupAlive(x,(y-1),targetCounter,replacmentCounter) # go down
 
-class game():
+class game(): # used only for text based testing
     def __init__(self):
         self.__mainBoard = board()
         self.__player = stone()
@@ -576,8 +585,8 @@ class game():
 
     
 if __name__ == "__main__":
-    #main = game()
-    #main.main()
+    main = game()
+    main.main()
     play = stone()
     play.setValue("x")
     test = board()
