@@ -8,22 +8,31 @@ class fileHandler():
         self.__isSgf = isSgf
 
     def saveData(self,data,filename):
+        filename = self.__appendFileType(filename)
         if self.__isSgf:
-            self.__saveDataSgf(data,(filename + ".sgf"))
+            self.__saveDataSgf(data,filename)
         else:
-            self.__saveDataTxt(data,(filename + ".txt"))
+            self.__saveDataTxt(data,filename)
 
     def readData(self,filename):
+        filename = self.__appendFileType(filename)
         try:
             if self.__isSgf:
-                data = self.__readSGF(filename + ".sgf")
+                data = self.__readSGF(filename)
             else:
-                data = self.__readTxt(filename + ".txt")
+                data = self.__readTxt(filename)
             error = ""
         except:
             data = []
             error = "error loading file"
         return data, error
+    
+    def __appendFileType(self,filename):
+        if self.__isSgf and filename[-4:] != ".sgf":
+            return filename + ".sgf"
+        elif not(self.__isSgf) and filename[-4:] != ".txt":
+            return filename + ".txt"
+        return filename
     
     def __saveDataSgf(self, data, filename):
         player = stone()
@@ -34,7 +43,7 @@ class fileHandler():
                 rawData += ";B["
             else:
                 rawData += ";W["
-            rawData += chr(97+ord(turn[0])) + chr(97+ord(turn[1])) + "]"
+            rawData += chr(97+(turn[0])) + chr(97+(turn[1])) + "]" # this may need ord before each the reads from the list
             player.invert()
         rawData += ")\n"
         fin = open(filename,"w")
@@ -87,8 +96,8 @@ class fileHandler():
         index = 0
         for char in data:
             if char == ";":
-                newData[index][0] = ord(string[2]) - ord("a") + 1
-                newData[index][1] = ord(string[3]) - ord("a") + 1
+                newData[index][0] = ord(string[2]) - 97
+                newData[index][1] = ord(string[3]) - 97
                 if string[0] == "B":
                     newData[index][2] = "o"
                 else:

@@ -1,5 +1,5 @@
 from basicImports import *
-from GoV6_1 import *
+from GoV7_0 import *
 import numpy as np
 import random as rnd
 import math
