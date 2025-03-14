@@ -39,6 +39,9 @@ class measure():
     def getDepths(self):
         return self.__depths
     
+    def getScore(self):
+        return self.__score
+    
     def getStats(self):
         return self.__maxSpan, self.__maxDepth, self.__noNodes, self.__timeTaken, self.__score
 

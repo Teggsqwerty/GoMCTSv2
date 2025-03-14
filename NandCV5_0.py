@@ -373,11 +373,12 @@ class NandC():
         score = test.minimax()
         end   = time.perf_counter_ns()
         #print(score)
-        self.__measure.setScore(score)
         x,y   = test.getBestMove()
         self.__measure.measureTree(test)
         self.__measure.setTime(end - start)
+        self.__measure.setScore(score)
         #print(self.__measure.getStats(),self.__measure.getDepths())
+        print(self.__measure.getScore())
         return x,y
     
     def playAIGame(self):
