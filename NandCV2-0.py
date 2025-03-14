@@ -20,13 +20,13 @@ class board():
             line3 =  "|"
             for x in self.__board[y]:  
                 if x == "o":
-                    line1 = line1 + " /¯¯¯\ |"
+                    line1 = line1 + " /¯¯¯\\ |"
                     line2 = line2 + " |   | " +str(y+1)
-                    line3 = line3 + " \___/ |"
+                    line3 = line3 + " \\___/ |"
                 elif x == "x":
-                    line1 = line1 + "  \ /  |"
-                    line2 = line2 + "   \   " + str(y+1)
-                    line3 = line3 + "  / \  |"
+                    line1 = line1 + "  \\ /  |"
+                    line2 = line2 + "   \\   " + str(y+1)
+                    line3 = line3 + "  / \\  |"
                 else:
                     line1 = line1 + "       |"
                     line2 = line2 + "       " + str(y+1)

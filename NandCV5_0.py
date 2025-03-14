@@ -23,13 +23,13 @@ class board():
             line3 =  "|"
             for x in self.__board[y]:  
                 if x == "o":
-                    line1 = line1 + " /¯¯¯\ |"
+                    line1 = line1 + " /¯¯¯\\ |"
                     line2 = line2 + " |   | " +str(y+1)
-                    line3 = line3 + " \___/ |"
+                    line3 = line3 + " \\___/ |"
                 elif x == "x":
-                    line1 = line1 + "  \ /  |"
-                    line2 = line2 + "   \   " + str(y+1)
-                    line3 = line3 + "  / \  |"
+                    line1 = line1 + "  \\ /  |"
+                    line2 = line2 + "   \\   " + str(y+1)
+                    line3 = line3 + "  / \\  |"
                 else:
                     line1 = line1 + "       |"
                     line2 = line2 + "       " + str(y+1)
@@ -376,6 +376,7 @@ class NandC():
         x,y = test.getBestMove()
         self.__measure.measureTree(test)
         self.__measure.setTime(end - start)
+        #print(self.__measure.getStats(),self.__measure.getDepths())
         return x,y
     
     def playAIGame(self):
@@ -410,7 +411,7 @@ class NandC():
             self.__board.printBoard()
             print(self.__user)
             if not(finished):
-                x,y = self.__getAiMove()
+                x,y = self.__getComputerMove()
                 if self.__user == "x":
                     finished, winner = self.__board.playTurn(x,y,"o")
                 else:
@@ -450,7 +451,7 @@ if __name__ == "__main__":
     
     test = NandC()
     #while True:
-    test.playOnePlayerGame()
+    test.playAIGame()
     
     
     # test = node("x",True,"x")

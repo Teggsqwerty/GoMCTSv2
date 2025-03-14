@@ -19,8 +19,9 @@ class rootWindow():
 
     def proccess(self):
         topBarChoice = self.__bar.proccess()
-        options = self.__window.proccess(topBarChoice)
-        self.__bar.setGameOptions(options)
+        options, changed = self.__window.proccess(topBarChoice)
+        if changed:
+            self.__bar.setGameOptions(options)
 
 class topBar():
     def __init__(self, parent, direction):
@@ -74,9 +75,9 @@ class mainWindow():
         self.__gameWindow = game(self.__cont, RIGHT)
     
     def proccess(self, topBarChoice):
-        stats, options = self.__gameWindow.proccess(topBarChoice)
+        stats, options, changed = self.__gameWindow.proccess(topBarChoice)
         self.__statsBar.proccess(stats)
-        return options
+        return options, changed
 
 class stats():
     def __init__(self, parent, direction):
@@ -106,9 +107,9 @@ class stats():
         self.__timeLab = Label(self.__cont, text = f"time taken:\n{self.__time} (ns)", font = FONT, width = self.__width, height = self.__height)
         self.__timeLab.pack(side = TOP)
 
-        self.__winning = "player 1"
-        self.__winningLab = Label(self.__cont, text = f"currently winning:\n{self.__winning}", font = FONT, width = self.__width, height = self.__height)
-        self.__winningLab.pack(side = TOP)
+        # self.__winning = "player 1"
+        # self.__winningLab = Label(self.__cont, text = f"currently winning:\n{self.__winning}", font = FONT, width = self.__width, height = self.__height)
+        # self.__winningLab.pack(side = TOP)
     
     def proccess(self,stats):
         if stats != None:
@@ -152,10 +153,12 @@ class game():
         self.__sizeCount = 0
 
     def proccess(self,topBarChoice):
+        changed = False
         if topBarChoice == False:
             pass
         elif topBarChoice == "Toggle Board Size" and self.__isGo:
             self.__toggleSize()
+            changed = True
         elif topBarChoice == "Save game":
             self.__saveGame()
         elif topBarChoice == "Load game (outcome)":
@@ -163,35 +166,40 @@ class game():
         elif topBarChoice == "Player 1: Human":
             self.__game.setPlayer1(False)
             self.__gameOptions[1] = "Player 1: Computer"
+            changed = True
         elif topBarChoice == "Player 1: Computer":
             self.__game.setPlayer1(True)
             self.__gameOptions[1] = "Player 1: Human"
+            changed = True
         elif topBarChoice == "Player 2: Human":
             self.__game.setPlayer2(False)
             self.__gameOptions[2] = "Player 2: Computer"
+            changed = True
         elif topBarChoice == "Player 2: Computer":
             self.__game.setPlayer2(True)
             self.__gameOptions[2] = "Player 2: Human"
+            changed = True
         elif topBarChoice == "Switch Game" and self.__isGo:
             self.__game.destroy()
             self.__isGo = False
             self.__game = NCBoard(self.__cont)
             self.__gameOptions[1] = "Player 1: Human"
             self.__gameOptions[2] = "Player 2: Computer"
+            changed = True
         elif topBarChoice == "Switch Game":
             self.__game.destroy()
             self.__isGo = True
             self.__game = goBoard(self.__cont,self.__allowedSizes[self.__sizeCount])
             self.__gameOptions[1] = "Player 1: Human"
             self.__gameOptions[2] = "Player 2: Computer"
-        return self.__game.proccess(topBarChoice), self.__gameOptions
+            changed = True
+        return self.__game.proccess(topBarChoice), self.__gameOptions, changed
     
     def __toggleSize(self):
         self.__sizeCount += 1
         if self.__sizeCount == len(self.__allowedSizes):
             self.__sizeCount = 0
         self.__game.destroy()
-        self.__isGo = True
         self.__game = goBoard(self.__cont,self.__allowedSizes[self.__sizeCount])
         self.__gameOptions[1] = "Player 1: Human"
         self.__gameOptions[2] = "Player 2: Computer"
@@ -394,6 +402,8 @@ class ring():
         if not(self.isFull()):
             self.__buffer[self.__wrptr] = val
             self.__wrptr += 1
+            if self.__wrptr > 255:
+                self.__wrptr = 0
             return True
         else:
             return False
@@ -402,6 +412,8 @@ class ring():
         if not(self.isEmpty()):
             val = self.__buffer[self.__rdptr]
             self.__rdptr += 1
+            if self.__rdptr > 255:
+                self.__rdptr = 0
             return val
         else:
             return False
@@ -432,3 +444,5 @@ if __name__ == "__main__":
             main.winfo_exists()
         except:
             exists = False
+
+    

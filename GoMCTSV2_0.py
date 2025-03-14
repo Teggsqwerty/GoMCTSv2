@@ -34,7 +34,7 @@ class MCTS():
         self.__player = player
         start = time.perf_counter_ns()
         self.__startTree(board)
-        for _ in range(50000):
+        for _ in range(200000):
             end = self.selection()
             #print(self.__path)
             moves, num = end.getAllMoves()
@@ -66,6 +66,7 @@ class MCTS():
         # print(end.getChildren()[0].getScore())
 
         del self.__tree
+        print(self.__measure.getDepths())
         return move, self.__measure.getStats()
     
     def selection(self):
