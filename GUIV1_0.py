@@ -386,7 +386,15 @@ class NCBoard():
                     self.__displayBoard[y][x].configure(image = self.__cross)
                 else:
                     self.__displayBoard[y][x].configure(image = self.__blank)
+                    
+    def saveGame(self,filename):
+        self.__board.saveGame(filename)
     
+    def loadGame(self,filename):
+        message = self.__board.loadGame(filename)
+        self.__infoBar.configure(text = message)
+        self.__updateGUI()
+
     def destroy(self):
         self.__cont.destroy()
         self.__infoBar.destroy()

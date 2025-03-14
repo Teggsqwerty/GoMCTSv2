@@ -238,7 +238,6 @@ class NandC():
             message = self.__GUIOnePlayerX(x,y)
         elif self.__Xhuman and self.__Ohuman:
             message = self.__GUITwoPlayer(x,y)
-            
         
         return message
 
@@ -368,12 +367,14 @@ class NandC():
             self.__user = "o"
         else:
             self.__user = "x"
-        test = node(self.__user,False,self.__user)
+        test  = node(self.__user,False,self.__user)
         test.setBoard(self.__board.getBoard())
         start = time.perf_counter_ns()
-        self.__measure.setScore(test.minimax())
+        score = test.minimax()
         end   = time.perf_counter_ns()
-        x,y = test.getBestMove()
+        #print(score)
+        self.__measure.setScore(score)
+        x,y   = test.getBestMove()
         self.__measure.measureTree(test)
         self.__measure.setTime(end - start)
         #print(self.__measure.getStats(),self.__measure.getDepths())
@@ -428,16 +429,18 @@ class NandC():
 
         if error != "":
             print("error")
-
-        for turn in fileData:
+        count = 0
+        valid = True
+        while count < len(fileData) and not(self.__finished) and valid:
+            turn = fileData[count]
             y = turn[1]
             x = turn[0] 
+            self.__user = turn[2]
             self.__data.append([x,y])
-            self.__board.playTurn(x,y,self.__user)
-            if self.__user == "x":
-                self.__user == "o"
-            else:
-                self.__user == "x"
+            message, valid, self.__finished = self.__userTurn(x,y)
+            count += 1
+            
+        return message
     
     def saveGame(self,filename):
         self.__file.saveData(self.__data,filename)

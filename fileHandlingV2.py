@@ -94,14 +94,15 @@ class fileHandler():
         newData = [[0,0,""] for _ in range(data.count(";")+1)]
         string = ""
         index = 0
+        data += ";"
         for char in data:
             if char == ";":
                 newData[index][0] = ord(string[2]) - 97
                 newData[index][1] = ord(string[3]) - 97
                 if string[0] == "B":
-                    newData[index][2] = "o"
-                else:
                     newData[index][2] = "x"
+                else:
+                    newData[index][2] = "o"
                 string = ""
                 index += 1
             else:
@@ -119,3 +120,5 @@ class fileHandler():
 
 if __name__ == "__main__":
     test = fileHandler()
+    test.setFileType(True)
+    print(test.readData("NCtest"))
