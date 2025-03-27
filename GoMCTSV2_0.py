@@ -34,7 +34,7 @@ class MCTS():
         self.__player = player
         start = time.perf_counter_ns()
         self.__startTree(board)
-        for _ in range(200000):
+        for _ in range(100000):
             end = self.selection()
             #print(self.__path)
             moves, num = end.getAllMoves()

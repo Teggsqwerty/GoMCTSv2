@@ -28,7 +28,7 @@ class topBar():
         self.__cont = Frame(parent, highlightbackground = "black", highlightthickness = 3)
         self.__cont.pack(side = direction, anchor = W, pady = 5)
     
-        self.__fileOptions = ["Save game", "Load game (outcome)"]
+        self.__fileOptions = ["Save game", "Load game"]
         self.__selectedFileOption = StringVar(value = "File")
 
         self.__file = OptionMenu(self.__cont, self.__selectedFileOption, *self.__fileOptions, command = lambda option: self.fileMenuHandler(self.__selectedFileOption))
@@ -161,7 +161,7 @@ class game():
             changed = True
         elif topBarChoice == "Save game":
             self.__saveGame()
-        elif topBarChoice == "Load game (outcome)":
+        elif topBarChoice == "Load game":
             self.__loadGame()
         elif topBarChoice == "Player 1: Human":
             self.__game.setPlayer1(False)

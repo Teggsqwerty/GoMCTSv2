@@ -229,8 +229,8 @@ class board():
         return self.__noChangedTiles
             
     def checkValidMove(self,position,inverse):
-        #if self.__checkSurounds(position, inverse):
-            #return False
+        if self.__checkSurounds(position, inverse):
+            return False
         if self.__board[position].center.value != BLANK:
             return False
         if self.__checkKo(position):
