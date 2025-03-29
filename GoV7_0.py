@@ -59,6 +59,9 @@ class board():
             self.removeDeadTiles(inverse,index)
             self.removeSingleDeadTile(playerVal,index)
             #self.printBoard()
+            if self.__checkSurounds(index,inverse):
+                self.__board[index].center.value = BLANK
+                return False
             if self.__board[index].center.value == player.value:
                 return True
             return False
@@ -73,6 +76,9 @@ class board():
             self.removeDeadTiles(inverse,index)
             self.removeSingleDeadTile(playerVal,index)
             #self.printBoard()
+            if self.__checkSurounds(index,inverse):
+                self.__board[index].center.value = BLANK
+                return False
             if self.__board[index].center.value == player.value:
                 return True
             return False
@@ -229,8 +235,8 @@ class board():
         return self.__noChangedTiles
             
     def checkValidMove(self,position,inverse):
-        if self.__checkSurounds(position, inverse):
-            return False
+        #if self.__checkSurounds(position, inverse):
+            #return False
         if self.__board[position].center.value != BLANK:
             return False
         if self.__checkKo(position):
