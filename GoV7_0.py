@@ -56,8 +56,8 @@ class board():
         valid = self.checkValidMove(index, inverse)  
         if valid:
             self.editTile(index,playerVal)
-            self.removeDeadTiles(inverse,index)
-            self.removeSingleDeadTile(playerVal,index)
+            self.__removeDeadTiles(inverse,index)
+            self.__removeSingleDeadTile(playerVal,index)
             #self.printBoard()
             if self.__checkSurounds(index,inverse):
                 self.__board[index].center.value = BLANK
@@ -73,8 +73,8 @@ class board():
         valid = self.checkValidMove(index, inverse)  
         if valid:
             self.editTile(index,playerVal)
-            self.removeDeadTiles(inverse,index)
-            self.removeSingleDeadTile(playerVal,index)
+            self.__removeDeadTiles(inverse,index)
+            self.__removeSingleDeadTile(playerVal,index)
             #self.printBoard()
             if self.__checkSurounds(index,inverse):
                 self.__board[index].center.value = BLANK
@@ -89,14 +89,14 @@ class board():
         self.__board = np.empty(self.size, object)
         for index in range(self.size):
             self.__board[index] = tile()
-        self.initPointer()
+        self.__initPointer()
 
         self.xLoses = 0
         self.oLoses = 0
         self.oneDeadStone = False
         self.lastRemStoneLoc = -1
 
-    def initPointer(self):
+    def __initPointer(self):
         for index in range(self.size):
             y,x = divmod(index,self.length)
             topX,topY = x,(y-1)
@@ -176,7 +176,7 @@ class board():
         self.__board[position].center.value = char
     
     # remove dead tiles beloning to "player" surounding "location"
-    def removeDeadTiles(self,player,location):
+    def __removeDeadTiles(self,player,location):
         self.lastRemStoneLoc = -1
         self.oneDeadStone = False
         deadStones = 0 
@@ -193,7 +193,7 @@ class board():
 
         self.__updateDeadStones(player,deadStones)
     
-    def removeSingleDeadTile(self,player,location):
+    def __removeSingleDeadTile(self,player,location):
         isGroup = self.checkIfGroup(location,player)
         if isGroup:
             y,x = divmod(location,self.length)

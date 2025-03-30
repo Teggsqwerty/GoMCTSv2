@@ -194,7 +194,7 @@ class NandC():
         self.__measure = measure()
         self.__file = FH.fileHandler()
         self.__data = []
-        self.__init(True,False)
+        self.__init(True,True)
 
     def __init(self, X,O):
         self.__board.resetGame()

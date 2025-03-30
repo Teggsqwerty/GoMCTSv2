@@ -31,17 +31,17 @@ class topBar():
         self.__fileOptions = ["Save game", "Load game"]
         self.__selectedFileOption = StringVar(value = "File")
 
-        self.__file = OptionMenu(self.__cont, self.__selectedFileOption, *self.__fileOptions, command = lambda option: self.fileMenuHandler(self.__selectedFileOption))
+        self.__file = OptionMenu(self.__cont, self.__selectedFileOption, *self.__fileOptions, command = lambda option: self.__fileMenuHandler(self.__selectedFileOption))
         self.__file.pack(side = LEFT)
 
-        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Computer","Switch Game", "Toggle Board Size"]
+        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Human","Switch Game", "Toggle Board Size"]
         self.__selectedGameOption = StringVar(value = "Game")
 
         self.__initGameOptions()
         self.__buff = ring()
 
     def __initGameOptions(self):
-        self.__game = OptionMenu(self.__cont, self.__selectedGameOption, *self.__gameOptions, command = lambda option: self.gameMenuHandler(self.__selectedGameOption))
+        self.__game = OptionMenu(self.__cont, self.__selectedGameOption, *self.__gameOptions, command = lambda option: self.__gameMenuHandler(self.__selectedGameOption))
         self.__game.pack(side = LEFT)
 
         self.__fill = Label(self.__cont, width = 950)
@@ -53,12 +53,12 @@ class topBar():
         self.__fill.destroy()
         self.__initGameOptions()
 
-    def fileMenuHandler(self, option):
+    def __fileMenuHandler(self, option):
         #print(option.get())
         self.__buff.push(option.get())
         option.set("File")
     
-    def gameMenuHandler(self, option):
+    def __gameMenuHandler(self, option):
         #print(option.get())
         self.__buff.push(option.get())
         option.set("Game")
@@ -147,7 +147,7 @@ class game():
         self.__isGo = True
         self.__game = goBoard(self.__cont,9)
 
-        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Computer","Switch Game", "Toggle Board Size"]
+        self.__gameOptions = ["Clear Board", "Player 1: Human", "Player 2: Human","Switch Game", "Toggle Board Size"]
 
         self.__allowedSizes = [9,13,15,17,19]
         self.__sizeCount = 0
@@ -184,14 +184,14 @@ class game():
             self.__isGo = False
             self.__game = NCBoard(self.__cont)
             self.__gameOptions[1] = "Player 1: Human"
-            self.__gameOptions[2] = "Player 2: Computer"
+            self.__gameOptions[2] = "Player 2: Human"
             changed = True
         elif topBarChoice == "Switch Game":
             self.__game.destroy()
             self.__isGo = True
             self.__game = goBoard(self.__cont,self.__allowedSizes[self.__sizeCount])
             self.__gameOptions[1] = "Player 1: Human"
-            self.__gameOptions[2] = "Player 2: Computer"
+            self.__gameOptions[2] = "Player 2: Human"
             changed = True
         return self.__game.proccess(topBarChoice), self.__gameOptions, changed
     
@@ -228,9 +228,9 @@ class goBoard():
 
         self.__buff = ring()
         
-        self.init()
+        self.__init()
         
-    def init(self):
+    def __init(self):
         self.__board.setSize(self.__size)
         self.__board.reset()
         if self.__size == 9:

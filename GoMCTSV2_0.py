@@ -216,7 +216,7 @@ class GO():
         self.__player = stone()
         self.__file = FH.fileHandler() 
         self.__Xhuman = True
-        self.__Ohuman = False
+        self.__Ohuman = True
         self.__stats = (0, 0, 0, 0, 0)
         self.__data = []
         self.__size = 19
