@@ -1,7 +1,7 @@
 import numpy as np
 from basicImports import *
 import matplotlib.pyplot as plt
-import fileHandlingV2 as FH
+import fileHandling as FH
 
 class board():
     # length is the length/width of the board 

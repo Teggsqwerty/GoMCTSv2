@@ -1,5 +1,7 @@
 from basicImports import *
-from GoV7_0 import *
+from Go import *
+
+from multiprocessing import Pool
 import numpy as np
 import random as rnd
 import math
@@ -28,13 +30,16 @@ class MCTS():
         self.__tree.setBoard(board)
 
     def getBestMove(self,board,width,player):
+
+        pool = Pool()
+
         self.__path = []
         self.__depth = 0
         self.__size = width ** 2
         self.__player = player
         start = time.perf_counter_ns()
         self.__startTree(board)
-        for _ in range(100000):
+        for _ in range(110):
             end = self.selection()
             #print(self.__path)
             moves, num = end.getAllMoves()
@@ -42,9 +47,7 @@ class MCTS():
             end.addChild(move)
             self.__path.append(end.getChildren()[-1])
 
-            self.simulation(self.__path[-1])
-            #print(self.__path[-1].getChildren())
-            self.backpropogation()
+            result1 = pool.apply_async(self.simAndBck, [self.__path[-1]])
 
             self.__path = []
             self.__depth = 0
@@ -53,22 +56,16 @@ class MCTS():
         self.__measure.measureTree(self.__tree)
         self.__measure.setTime(stop - start)
         self.__measure.setScore(self.__tree.getScore())
-        #print("root node score", self.__tree.getScore())
-        #print("best move", move)
-
-        # self.__startTree()
-        # for x in range(40):
-        #     self.__tree.addChild(x)
-        # end = self.selection()
-        # self.simulation(end)
-        # print(end.getLastChild().getScore())
-        # print(end.getLastChild().getBoard().printBoard())
-        # print(end.getChildren()[0].getScore())
+        
 
         del self.__tree
         print(self.__measure.getDepths())
         return move, self.__measure.getStats()
     
+    def simAndBck(self,node):
+        self.simulation(node)
+        self.backpropogation()
+
     def selection(self):
         self.__depth = 0
         current = self.__tree

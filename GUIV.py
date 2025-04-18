@@ -1,5 +1,5 @@
-import NandCV5_0 as NC
-import GoMCTSV2_0 as GO
+import NandC as NC
+import GoMCTSV0_0 as GO
 
 from tkinter import *
 from tkinter import filedialog
