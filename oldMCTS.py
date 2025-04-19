@@ -1,8 +1,5 @@
 from basicImports import *
 from Go import *
-
-from multiprocessing import Process
-
 import numpy as np
 import random as rnd
 import math
@@ -16,9 +13,12 @@ class MCTS():
         # still gives approx. 10 trillion possible games
         self.__maxSearchDepth = 5 
         # this is an arbitary value, size rounded up to the nearest 100 
-        self.__simDepth =  20 #(-(self.__size // -100))*100 # use 10 for tests
-        
-        self.__iterations = 10000
+        self.__simDepth =  20# (-(self.__size // -100))*100 # use 10 for tests
+        self.__path = []
+        self.__depth = 0
+
+    def setDepth(self,depth):
+        self.__depth = depth
 
     def __startTree(self,board):
         if self.__player == "x":
@@ -28,55 +28,53 @@ class MCTS():
         self.__tree.setBoard(board)
 
     def getBestMove(self,board,width,player):
+        self.__path = []
+        self.__depth = 0
         self.__size = width ** 2
         self.__player = player
-
         start = time.perf_counter_ns()
         self.__startTree(board)
-
-        sims = []
-        back = []
-
-        for _ in range(self.__iterations):
+        for _ in range(10000):
             end = self.selection()
-
+            #print(self.__path)
             moves, num = end.getAllMoves()
+            move = moves[rnd.randint(0, (len(moves) - 1))]
+            end.addChild(move)
+            self.__path.append(end.getChildren()[-1])
 
-            move = moves[rnd.randint(0, num - 1)]
-            child = end.addChild(move)
+            self.simulation(self.__path[-1])
+            #print(self.__path[-1].getChildren())
+            self.backpropogation()
 
-            #self.simAndBck(child)
-
-            sims.append(Process(target = self.simulation, args = [child]))
-            back.append(Process(target = self.backpropogation, args = [child]))
-
-            #print("next task please")
-
-        for x in sims: x.run()
-        for x in back: x.run()
-
-
+            self.__path = []
+            self.__depth = 0
         move = self.__tree.getBestMove()
         stop = time.perf_counter_ns()
         self.__measure.measureTree(self.__tree)
         self.__measure.setTime(stop - start)
         self.__measure.setScore(self.__tree.getScore())
-        
-        #print(self.__tree.getScore(),self.__tree.getChildren()[0].getScore())
+        #print("root node score", self.__tree.getScore())
+        #print("best move", move)
+
+        # self.__startTree()
+        # for x in range(40):
+        #     self.__tree.addChild(x)
+        # end = self.selection()
+        # self.simulation(end)
+        # print(end.getLastChild().getScore())
+        # print(end.getLastChild().getBoard().printBoard())
+        # print(end.getChildren()[0].getScore())
 
         del self.__tree
-        #print(self.__measure.getDepths())
+        print(self.__measure.getDepths())
         return move, self.__measure.getStats()
-
-    def simAndBck(self,node):
-        self.simulation(node)
-        self.backpropogation(node)
-
+    
     def selection(self):
-        depth = 0
+        self.__depth = 0
         current = self.__tree
         while True:
-            if depth > self.__maxSearchDepth:
+            self.__path.append(current)
+            if self.__depth > self.__maxSearchDepth:
                 return current
             childNum = rnd.randint(0,self.__size)
             if childNum >= current.getNumChildren():
@@ -84,9 +82,9 @@ class MCTS():
             else:
                 new = current.getChildren()[childNum]
                 current = new
-            depth += 1
+            self.__depth += 1
     
-    def simulation(self, node):
+    def simulation(self,node):
         node.addCopyChild()
         sim = node.getLastChild()
         for x in range(self.__simDepth):
@@ -103,30 +101,28 @@ class MCTS():
         sim.setScore(score)
         #print("get score", sim.getScore())
 
-    def backpropogation(self,node):
-        current = node
-        while current.getParent() != None:
+    def backpropogation(self):
+        for count in range((self.__depth+1),-1,-1):
+            #print("count",count)
+            current = self.__path[count]
             children = current.getChildren()
             t = 0
             score = 0.01
             for child in children:
                 t += 1
                 score += child.getScore()
+                #print("score", child.getScore())
             val = (score/t) + ((math.sqrt(((2*math.log(t))/(abs(score)))))*(abs(score)/score))
+            #print("value",val)
             current.setScore(val)
-            new = current.getParent()
-            current = new
-        #print("done back prop")
 
 class node():
-    def __init__(self, size, player, root, isMax, parent = None):
+    def __init__(self, size, player, root, isMax):
         self.__board = board()
         self.__size = size
+        self.__children = []
         self.__player = stone()
         self.__player.setValue(player)
-
-        self.__children = []
-        self.__parent = parent
         self.__root = root # root player
         self.__isMax = isMax
         self.__score = 0
@@ -138,9 +134,6 @@ class node():
 
     def getChildren(self):
         return self.__children
-    
-    def getParent(self):
-        return self.__parent
     
     def getLastChild(self):
         return self.__children[-1]
@@ -207,18 +200,14 @@ class node():
         return self.__player.invert()
 
     def addChild(self,index):
-        self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax),self))
-        child = self.__children[-1]
-        child.setBoard(self.__board)
-        child.setLocation(index)
-        return child
+        self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax)))
+        self.__children[-1].setBoard(self.__board)
+        self.__children[-1].setLocation(index)
         
     def addCopyChild(self):
-        self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax),self))
-        child = self.__children[-1]
-        child.setBoard(self.__board)
-        child.setLeaf()
-        return child
+        self.__children.append(node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax)))
+        self.__children[-1].setBoard(self.__board)
+        self.__children[-1].setLeaf()
 
 class GO():
     def __init__(self):
@@ -364,7 +353,6 @@ class GO():
             #self.__player.setValue("x")
             move, self.__stats = self.__engine.getBestMove(self.__board, self.__size,"x")
         return move
-
     
 
 
