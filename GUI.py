@@ -1,5 +1,5 @@
 import NandC as NC
-import GoMCTSV0_0 as GO
+import GoMCTSV0_1 as GO
 
 from tkinter import *
 from tkinter import filedialog
@@ -85,7 +85,7 @@ class stats():
         self.__cont.pack(side = direction)
 
         self.__width = 20
-        self.__height = 5
+        self.__height = 3
 
         self.__numNodes = 0 
         self.__numNodesLab = Label(self.__cont, text = f"number of nodes:\n{self.__numNodes}", font = FONT, width = self.__width , height = self.__height)
@@ -104,22 +104,29 @@ class stats():
         self.__maxBreadthLab.pack(side = TOP)
 
         self.__time = 0 
-        self.__timeLab = Label(self.__cont, text = f"time taken:\n{self.__time} (ns)", font = FONT, width = self.__width, height = self.__height)
+        self.__timeLab = Label(self.__cont, text = f"time taken:\n{self.__time/1000000000} (s)", font = FONT, width = self.__width, height = self.__height)
         self.__timeLab.pack(side = TOP)
 
-        # self.__winning = "player 1"
-        # self.__winningLab = Label(self.__cont, text = f"currently winning:\n{self.__winning}", font = FONT, width = self.__width, height = self.__height)
-        # self.__winningLab.pack(side = TOP)
+        self.__effiLab = Label(self.__cont, text = f"time per loop:\n{self.__time/(self.__numNodes*1000+0.01)}", font = FONT, width = self.__width, height = self.__height)
+        self.__effiLab.pack(side = TOP)
+
+        self.__mode = 0
+        self.__modeLab = Label(self.__cont, text = f"mode:\n{self.__mode}", font = FONT, width = self.__width, height = self.__height)
+        self.__modeLab.pack(side = TOP)
+
+
     
     def proccess(self,stats):
         if stats != None:
-            self.__maxBreadth, self.__maxDepth, self.__numNodes, self.__time, self.__winProb = stats
+            self.__maxBreadth, self.__maxDepth, self.__numNodes, self.__time, self.__winProb, self.__mode = stats
             self.__numNodesLab.configure(text = f"number of nodes:\n{self.__numNodes}")
             self.__winProbLab.configure(text = f"last minimax score:\n{self.__winProb}")
             self.__maxDepthLab.configure(text = f"max search depth:\n{self.__maxDepth}")
             self.__maxBreadthLab.configure(text = f"max search breadth:\n{self.__maxBreadth}")
-            self.__timeLab.configure(text = f"time taken:\n{self.__time} (ns)")
-
+            self.__timeLab.configure(text = f"time taken:\n{self.__time/1000000000} (s)")
+            self.__effiLab.configure(text = f"time per loop:\n{self.__time/(self.__numNodes*1000+0.01)}")
+            self.__modeLab.configure(text = f"mode:\n{self.__mode}")
+            
     def setNumNodes(self,val):
         self.__numNodes = val
 

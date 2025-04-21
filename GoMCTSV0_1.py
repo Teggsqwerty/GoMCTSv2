@@ -1,7 +1,7 @@
 from basicImports import *
 from Go import *
 
-from multiprocessing import Process
+from multiprocessing import *
 
 import numpy as np
 import random as rnd
@@ -16,9 +16,9 @@ class MCTS():
         # still gives approx. 10 trillion possible games
         self.__maxSearchDepth = 5 
         # this is an arbitary value, size rounded up to the nearest 100 
-        self.__simDepth =  20 #(-(self.__size // -100))*100 # use 10 for tests
+        self.__simDepth =  (-(self.__size // -100))*100 # use 10 for tests
         
-        self.__iterations = 10000
+        self.__iterations = 1000
 
     def __startTree(self,board):
         if self.__player == "x":
@@ -31,30 +31,29 @@ class MCTS():
         self.__size = width ** 2
         self.__player = player
 
+        cpus = cpu_count()
+        print('Number of cpu\'s to process WM: %d' % cpus)
+        poolCount = cpus*2
+
         start = time.perf_counter_ns()
         self.__startTree(board)
 
-        sims = []
-        back = []
+        toDo = []
+        roots = []
 
-        for _ in range(self.__iterations):
-            end = self.selection()
+        moves, num = self.__tree.getAllMoves()
+        for move in moves:
+            roots.append(self.__tree.getNewChild(move))
 
-            moves, num = end.getAllMoves()
+        with Pool(processes = poolCount) as pool: 
+            for subTree,subToDo in pool.map_async(self.expansion,roots).get():
+                toDo.append(subToDo)
+                self.__tree.setChild(subTree)
 
-            move = moves[rnd.randint(0, num - 1)]
-            child = end.addChild(move)
-
-            #self.simAndBck(child)
-
-            sims.append(Process(target = self.simulation, args = [child]))
-            back.append(Process(target = self.backpropogation, args = [child]))
-
-            #print("next task please")
-
-        for x in sims: x.run()
-        for x in back: x.run()
-
+        with Pool(processes = poolCount) as pool: 
+            results = pool.map(self.simulation,toDo)
+            for x in results:
+                pass
 
         move = self.__tree.getBestMove()
         stop = time.perf_counter_ns()
@@ -65,58 +64,62 @@ class MCTS():
         #print(self.__tree.getScore(),self.__tree.getChildren()[0].getScore())
 
         del self.__tree
-        #print(self.__measure.getDepths())
+        del toDo
+        print(self.__measure.getDepths())
         return move, self.__measure.getStats()
 
-    def simAndBck(self,node):
-        self.simulation(node)
-        self.backpropogation(node)
+    def expansion(self,node):
+        toDo = []
+        for _ in range(self.__iterations):
+            depth = 0
+            current = node
+            notDone = True
+            while notDone:
+                if depth > self.__maxSearchDepth:
+                    notDone = False
+                childNum = rnd.randint(0,self.__size)
+                if childNum >= current.getNumChildren():
+                    notDone = False
+                else:
+                    new = current.getChildren()[childNum]
+                    current = new
+                depth += 1
 
-    def selection(self):
-        depth = 0
-        current = self.__tree
-        while True:
-            if depth > self.__maxSearchDepth:
-                return current
-            childNum = rnd.randint(0,self.__size)
-            if childNum >= current.getNumChildren():
-                return current
-            else:
-                new = current.getChildren()[childNum]
-                current = new
-            depth += 1
+            moves, num = current.getAllMoves()
+
+            move = moves[rnd.randint(0, num - 1)]
+            child = current.addChild(move)
+
+            toDo.append(child)
+
+        return node,toDo
     
     def simulation(self, node):
-        node.addCopyChild()
-        sim = node.getLastChild()
+        sim = node.addCopyChild()
         for x in range(self.__simDepth):
             moves, num = sim.getAllMoves()
             move = moves[rnd.randint(0, num - 1)]
             valid = sim.setLocation(move)
             if valid:
-                sim.invertPlayer() 
-            #input() # used for bug testing to allow for the program to be steped through
-            #sim.printBoard() # used for bug testing
+                sim.invertPlayer()
 
-        score = sim.getBoard().getScore(self.__player)
-        #print("set score", score)
-        sim.setScore(score)
-        #print("get score", sim.getScore())
-
+        sim.setScore(sim.getBoard().getScore(self.__player))
+        
+        return node
+    
     def backpropogation(self,node):
         current = node
         while current.getParent() != None:
             children = current.getChildren()
-            t = 0
+            t = 0.01
             score = 0.01
             for child in children:
                 t += 1
                 score += child.getScore()
-            val = (score/t) + ((math.sqrt(((2*math.log(t))/(abs(score)))))*(abs(score)/score))
+            val = (score/t) + ((math.sqrt((abs(2*math.log(t))/(abs(score)))))*(abs(score)/score))
             current.setScore(val)
             new = current.getParent()
             current = new
-        #print("done back prop")
 
 class node():
     def __init__(self, size, player, root, isMax, parent = None):
@@ -219,7 +222,16 @@ class node():
         child.setBoard(self.__board)
         child.setLeaf()
         return child
-
+    
+    def getNewChild(self,index):
+        child = node(self.__size,self.getInversePlayer(),self.__root,not(self.__isMax),self)
+        child.setBoard(self.__board)
+        child.setLocation(index)
+        return child
+    
+    def setChild(self,child):
+        self.__children.append(child)
+    
 class GO():
     def __init__(self):
         self.__engine = MCTS()
@@ -376,7 +388,7 @@ if __name__ == "__main__":
     test = MCTS()
     for abc in range(1):
         move, stats = test.getBestMove(printing,9,bla)
-        maxSpan, maxDepth, noNodes, timeTaken, score = stats
+        maxSpan, maxDepth, noNodes, timeTaken, score, mode = stats
         print("time per loop", (timeTaken/(noNodes*1000000)))
         # print(move)
         # print("span",maxSpan,"depth", maxDepth,"nodes", noNodes,"time", timeTaken,"score", score, "time per loop", (timeTaken/noNodes))

@@ -35,7 +35,7 @@ class MCTS():
         self.__startTree(board)
 
         sims = []
-        back = []
+
 
         for _ in range(self.__iterations):
             end = self.selection()
@@ -47,14 +47,12 @@ class MCTS():
 
             #self.simAndBck(child)
 
-            sims.append(Process(target = self.simulation, args = [child]))
-            back.append(Process(target = self.backpropogation, args = [child]))
+            sims.append(Process(target = self.simAndBck, args = [child]))
 
             #print("next task please")
 
-        for x in sims: x.run()
-        for x in back: x.run()
-
+        for x in sims: x.start()
+        for x in sims: x.wait()
 
         move = self.__tree.getBestMove()
         stop = time.perf_counter_ns()
