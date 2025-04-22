@@ -51,31 +51,16 @@ class board():
 
     def playTurn(self, x, y, player): # returns wether or not the move was valid
         index = (y*self.length) + x
-        inverse = player.getInverse()
-        playerVal = player.getValue()
-        valid = self.checkValidMove(index, inverse)  
-        if valid:
-            self.editTile(index,playerVal)
-            self.__removeDeadTiles(inverse,index)
-            self.__removeSingleDeadTile(playerVal,index)
-            #self.printBoard()
-            if self.__checkSurounds(index,inverse):
-                self.__board[index].center.value = BLANK
-                return False
-            if self.__board[index].center.value == player.value:
-                return True
-            return False
-        return False
+        return self.playTurnIndex(index,player)
 
     def playTurnIndex(self, index, player): # returns wether or not the move was valid
         inverse = player.getInverse()
         playerVal = player.getValue()
-        valid = self.checkValidMove(index, inverse)  
+        valid = self.checkValidMove(index)  
         if valid:
-            self.editTile(index,playerVal)
+            self.__board[index].center.value = playerVal
             self.__removeDeadTiles(inverse,index)
             self.__removeSingleDeadTile(playerVal,index)
-            #self.printBoard()
             if self.__checkSurounds(index,inverse):
                 self.__board[index].center.value = BLANK
                 return False
@@ -123,100 +108,38 @@ class board():
             else:
                 lefInd = lefX+lefY*self.length
                 self.__board[index].left = lefInd
-                
-    def __makePrintable(self):
-        printable = [[BLANK for _ in range(self.length)] for _ in range(self.length)]
-        for index in range(self.size):
-            y,x = divmod(index,self.length)
-            printable[y][x] = self.__board[index].center.value
-        return printable
-    
-    def __printXIndex(self):
-        print(" ", end = "")
-        for n in range(1,self.length+1):
-            if n > 9:
-                print(f"  {n}",end = "")
-            else:
-                print(f"  {n}",end = " ")
-        print()
-        
-    def __processRow(self,board,y):
-        string = BLANK
-        for x in range(self.length):
-            if (board[y][x] == "x"):
-                string += "X"
-            elif (board[y][x] == "o"):
-                string += "O"
-            elif (board[y][x] == BLANK):
-                string += " "
-            else:
-                string += "b"
-            string += "---"
-        return string[:-3]
-    
-    def printBoard(self):
-        board = self.__makePrintable()
-        self.__printXIndex()
-        for y in range(self.length):
-            string = self.__processRow(board,y)
-            printedY = (self.length - y)
-            if printedY < 10:
-                print(printedY,"  ", string,"  ",printedY,sep = "")
-            else:
-                print(printedY," ",string," ",printedY,sep = "")
-            string = BLANK
-            if y != (self.length-1):
-                for _ in range(self.length):
-                    string += " |  "
-                print(" ",string)
-        self.__printXIndex()
-        print("\n\n")
-        
-    def editTile(self,position,char):
-        self.__board[position].center.value = char
     
     # remove dead tiles beloning to "player" surounding "location"
     def __removeDeadTiles(self,player,location):
         self.lastRemStoneLoc = -1
         self.oneDeadStone = False
-        deadStones = 0 
+        noDead = 0 
         tiles = self.__board[location].getSuroundLocations()
-        #tiles += (location,) # i dont think this is needed 
         for position in tiles:
             if position != "f":
                 if self.__board[position].center.value == player:
-                    isGroup = self.checkIfGroup(position,player)
-                    if isGroup:
-                        deadStones = self.removeDeadGroup(player,position)
+                    if player in self.__board[position].getSurounds(self.__board):
+                        noDead = self.removeDeadGroup(player,position)
                     else:
-                        deadStones = self.removeDeadTile(position)
+                        noDead = self.removeDeadTile(position)
 
-        self.__updateDeadStones(player,deadStones)
+        if player == "x":
+            self.xLoses += noDead
+        else:
+            self.oLoses += noDead
     
     def __removeSingleDeadTile(self,player,location):
-        isGroup = self.checkIfGroup(location,player)
-        if isGroup:
+        if player in self.__board[location].getSurounds(self.__board):
             y,x = divmod(location,self.length)
             newGroup = group(self.__board, location, self.length)
             newGroup.checkIfGroupAlive(x, y, player, "checked")
             self.__floodFill(x,y,"checked",player)
             if not(newGroup.alive):
                 self.__board[location].center.value = BLANK
-
-    def __updateDeadStones(self,player,noDead):
-        if player == "x":
-            self.xLoses += noDead
-        else:
-            self.oLoses += noDead
-
-    def checkIfGroup(self,position,player):
-        if player in self.__board[position].getSurounds(self.__board):
-            return True
-        return False
     
     def removeDeadTile(self,position):
         if not(self.__board[position].isAlive(self.__board)):
-            self.editTile(position,BLANK)
+            self.__board[position].center.value = BLANK
             self.lastRemStoneLoc = position
             self.oneDeadStone = True
             return 1
@@ -234,14 +157,8 @@ class board():
             self.__floodFill(x,y,"checked",BLANK)
         return self.__noChangedTiles
             
-    def checkValidMove(self,position,inverse):
-        #if self.__checkSurounds(position, inverse):
-            #return False
-        if self.__board[position].center.value != BLANK:
-            return False
-        if self.__checkKo(position):
-            return False
-        return True
+    def checkValidMove(self,position):
+        return not(self.__board[position].center.value != BLANK or (self.oneDeadStone and position == self.lastRemStoneLoc))
     
     # returns False if it IS a valid move
     def __checkSurounds(self, position, inverse):
@@ -249,15 +166,6 @@ class board():
             if i != "f" and self.__board[i].center.value != inverse:
                 return False
         return True
-    
-    def __checkKo(self, position):
-        if self.oneDeadStone and position == self.lastRemStoneLoc:
-            return True
-        return False
-        """
-        if the last go removed one of your stones 
-        then you are not allowed to play where your stone was removed from on the next move
-        """
     
     def getScore(self,player):
         xScore = 0
@@ -280,8 +188,6 @@ class board():
         else:
             return (oScore - xScore) + self.xLoses
         
-    # found this pseudocode on freeCodeCamp (basicaly c++ not pseudocode)
-    # it was fairly bad so this is it improved (i hope)
     def __floodFill(self,x, y, targetCounter, replacmentCounter):
         currentValue = self.__board[(x+(y*self.length))].center.value
         if currentValue != targetCounter:
@@ -350,33 +256,41 @@ class tile():
         tValue = self.getTop(board)
         rValue = self.getRight(board)
         bValue = self.getBottom(board)
-        # not changed in previous versions from 
-        # lValue = self.getRight(board)
-        # may be the cause of some major errors in previous version
         lValue = self.getLeft(board)
         return tValue,rValue,bValue,lValue
 
+    # def isAlive(self,board):
+    #     try:
+    #         if board[self.right].center.value != (self.center.getInverse()):
+    #             return True
+    #     except:
+    #         pass
+    #     try:
+    #         if board[self.left].center.value != (self.center.getInverse()):
+    #             return True 
+    #     except:
+    #         pass
+    #     try:
+    #         if board[self.top].center.value != (self.center.getInverse()):
+    #             return True
+    #     except:
+    #         pass
+    #     try:
+    #         if board[self.bottom].center.value != (self.center.getInverse()):
+    #             return True
+    #     except:
+    #         pass
+    #     return False
+    
     def isAlive(self,board):
-        try:
-            if board[self.right].center.value != (self.center.getInverse()):
-                return True
-        except:
-            pass
-        try:
-            if board[self.left].center.value != (self.center.getInverse()):
-                return True 
-        except:
-            pass
-        try:
-            if board[self.top].center.value != (self.center.getInverse()):
-                return True
-        except:
-            pass
-        try:
-            if board[self.bottom].center.value != (self.center.getInverse()):
-                return True
-        except:
-            pass
+        if self.right != "f" and board[self.right].center.value != (self.center.getInverse()):
+            return True
+        elif self.left != "f" and board[self.left].center.value != (self.center.getInverse()):
+            return True 
+        elif self.top != "f" and board[self.top].center.value != (self.center.getInverse()):
+            return True
+        elif self.bottom != "f" and board[self.bottom].center.value != (self.center.getInverse()):
+            return True
         return False
       
   
@@ -412,202 +326,3 @@ class group():
             self.checkIfGroupAlive(x,(y+1),targetCounter,replacmentCounter) # go up
         if y != 0:
             self.checkIfGroupAlive(x,(y-1),targetCounter,replacmentCounter) # go down
-
-class game(): # used only for text based testing
-    def __init__(self):
-        self.__mainBoard = board()
-        self.__player = stone()
-        self.__file = FH.fileHandler() 
-            
-    def __printMenu(self):
-        print("\n=========================")
-        print("S: save game")
-        print("Q: quit game")
-        print("P: print game")
-        print("D: Display Score Graph")
-        print("Enter: continue")
-        print("=========================\n")
-        print("enter your Choice: ", end = "")
-
-    def __getValidMove(self):
-        length = self.__mainBoard.getLength()
-        valid = False
-        while not(valid):
-            x = getValidInt(1,length,"enter x: ",["M"]) 
-            if x != "M":
-                x -= 1
-                y = getValidInt(1,length,"enter y: ") 
-                y = length - y
-                print()
-                index = (y*length) + x
-                valid = self.__mainBoard.checkValidMove(index)
-                if not(valid):
-                    print("must be a valid move!")
-                else:
-                    return x,y
-            else:
-                return x,0
-        
-    def __playGameTxt(self, boardWidth):
-        test = stone() # used for testing
-        test.setValue("x") # used for testing
-        self.__player.setValue("x")
-        self.__mainBoard.setLength(boardWidth)
-        self.__mainBoard.resetBoard()
-        won = False
-        turnCounter = 0
-        scores = [0]
-        data = []
-        while not(won):
-            self.__mainBoard.printBoard()
-            #print("current score is " + str(self.__mainBoard.getScore(test))) # "test" used just for testing
-            print(f"it is player {self.__player.getValue()}'s turn.\n")
-            x = "M"
-            while x == "M":
-                x,y = self.__getValidMove()
-                if x == "M":
-                    self.__printMenu()
-                    Choice = input()
-                    if Choice == "S":
-                        filename = input("enter save game name: ")
-                        self.__file.saveData(data,filename)
-                    elif Choice == "Q": # hello world
-                        won = True
-                        x == -1
-                    elif Choice == "P":
-                        print(data)
-                    elif Choice == "D":
-                        self.__graphScore(scores)
-                    print(won)
-            if x != -1:
-                self.__mainBoard.playTurn(x,y,self.__player)
-                turnCounter += 1
-                data.append([x,y])
-                self.__player.setValue(self.__player.getInverse())
-                scores.append(self.__mainBoard.getScore(test))
-
-    def __loadExampleGame(self, filename, sgf, boardWidth):
-        test = stone() # used for testing
-        test.setValue("x") # used for testing
-
-        self.__player.setValue("x")
-        self.__mainBoard.setLength(boardWidth)
-        self.__mainBoard.resetBoard()
-
-        won = False
-        turnCounter = 0
-        scores = [0]
-        data = []
-
-        self.__file.setFileType(sgf)
-        fileData, error = self.__file.readData(filename)
-
-        if error != "":
-            raise Exception(error)
-
-        for turn in fileData:
-            y = boardWidth - turn[1]
-            x = turn[0] - 1
-            data.append([x,y])
-            self.__mainBoard.playTurn(x,y,self.__player)
-            
-            self.__player.invert()
-            scores.append(self.__mainBoard.getScore(test))
-            # self.__mainBoard.printBoard()
-            # print("current score is " + str(self.__mainBoard.getScore(test)))
-
-        while not(won):
-            self.__mainBoard.printBoard()
-            print("current score is " + str(self.__mainBoard.getScore(test))) # "test" used just for testing
-            print(f"it is player {self.__player.getValue()}'s turn.\n")
-            x = "M"
-            while x == "M":
-                x,y = self.__getValidMove()
-                if x == "M":
-                    self.__printMenu()
-                    Choice = input()
-                    if Choice == "S":
-                        filename = input("enter save game name: ")
-                        self.__file.saveData(data,filename)
-                    elif Choice == "Q": # hello world
-                        won = True
-                        x == -1
-                    elif Choice == "P":
-                        print(data)
-                    elif Choice == "D":
-                        self.__graphScore(scores)
-            if x != -1:
-                self.__mainBoard.playTurn(x,y,self.__player)
-                scores[turnCounter] = self.__mainBoard.getScore(test)
-                turnCounter += 1
-                data.append([x,y])
-                self.__player.setValue(self.__player.getInverse())
-            
-
-        
-    def __getMainMenuChoice(self):
-        while True:
-            print("=============================")
-            print("My GO game!")
-            print("1: play 2 player game")
-            print("2: load an example game(.txt)")
-            print("3: load an example game(.sgf)")
-            print("9: quit")
-            print("==============================\n")
-            return getValidInt(1,3,"enter your choice: ",[9])
-    
-    def __graphScore(self,scores):
-        y = np.array(scores)
-        i = 2
-        z = []
-        for x in range(i,len(scores)):
-            z.append(np.std(y[(x-i):x]))
-        n = 0.
-        for x in range(len(z)):
-            if z[x] < n:
-                print("done",x)
-        #plt.plot(y)
-        plt.plot(z)
-        plt.show()
-
-    def main(self):
-        playing = True
-        while playing:
-            mainChoice = self.__getMainMenuChoice()
-            if mainChoice == 1:
-                boardSize = getValidInt(1,19,"Enter the board size (1,19): ")
-                self.__playGameTxt(boardSize)
-            elif mainChoice in [2,3]:
-                boardSize = getValidInt(1,19,"Enter the board size for the file(1,19): ")
-                invalid = True
-                while invalid:
-                    fName = input("Enter a valid file name: ")
-                    try:
-                        self.__loadExampleGame(fName, (mainChoice==3), boardSize)
-                        invalid = False
-                    except:
-                        print("Must be a valid file name.")
-            elif mainChoice == 9:
-                playing = False
-    
-
-    
-if __name__ == "__main__":
-    main = game()
-    main.main()
-    play = stone()
-    play.setValue("x")
-    test = board()
-    test.resetBoard()
-
-    test.playTurnIndex(1,play)
-    test.playTurnIndex(10,play)
-    test.playTurnIndex(18,play)
-
-    play.invert()
-
-    test.playTurnIndex(9,play)
-    test.printBoard()
-    print(test.playTurnIndex(0,play))
-    test.printBoard()             # for testing stone validation on the edge
-

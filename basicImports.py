@@ -12,7 +12,7 @@ class measure():
         self.__score     = 0
         self.__mode      = 0
         self.__depths    = [0,0,0,0,0,0,0,0,0,0]
-        self.__scores    = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        #self.__scores    = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
     def measureTree(self,node):
         self.__initVals()
@@ -24,15 +24,15 @@ class measure():
             if x != 0:
                 self.__maxDepth += 1
 
-        maxi = max(self.__scores)
-        for c,x in enumerate(self.__scores):
-            if x == maxi:
-                self.__mode = c
+        # maxi = max(self.__scores)
+        # for c,x in enumerate(self.__scores):
+        #     if x == maxi:
+        #         self.__mode = c
 
     def __measure(self, node, depth):
         self.__noNodes += 1
         self.__depths[depth] += 1
-        self.__scores[int(node.getScore()) + 10] += 1
+        #self.__scores[int(node.getScore()) + 20] += 1
         children = node.getChildren()
         for child in children:
             self.__measure(child,(depth + 1))
