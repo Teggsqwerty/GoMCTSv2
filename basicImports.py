@@ -12,7 +12,8 @@ class measure():
         self.__score     = 0
         self.__mode      = 0
         self.__depths    = [0,0,0,0,0,0,0,0,0,0]
-        #self.__scores    = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        self.__scores    = [0 for x in range(80)]
+        self.__cpuCount  = 0
 
     def measureTree(self,node):
         self.__initVals()
@@ -24,15 +25,15 @@ class measure():
             if x != 0:
                 self.__maxDepth += 1
 
-        # maxi = max(self.__scores)
-        # for c,x in enumerate(self.__scores):
-        #     if x == maxi:
-        #         self.__mode = c
+        maxi = max(self.__scores)
+        for c,x in enumerate(self.__scores):
+            if x == maxi:
+                self.__mode = c
 
     def __measure(self, node, depth):
         self.__noNodes += 1
         self.__depths[depth] += 1
-        #self.__scores[int(node.getScore()) + 20] += 1
+        self.__scores[int(node.getScore()) + 40] += 1
         children = node.getChildren()
         for child in children:
             self.__measure(child,(depth + 1))
@@ -42,6 +43,12 @@ class measure():
 
     def setTime(self,val):
         self.__timeTaken = val
+    
+    def setCPUs(self,val):
+        self.__cpuCount = val
+
+    def setNodes(self,val):
+        self.__noNodes = val
         
     def getDepths(self):
         return self.__depths
@@ -50,7 +57,7 @@ class measure():
         return self.__score
     
     def getStats(self):
-        return self.__maxSpan, self.__maxDepth, self.__noNodes, self.__timeTaken, self.__score, self.__mode
+        return self.__maxSpan, self.__maxDepth, self.__noNodes, self.__timeTaken, self.__score, self.__mode, self.__cpuCount
 
 class stone():
     def __init__(self):

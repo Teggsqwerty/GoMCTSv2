@@ -16,9 +16,9 @@ class MCTS():
         # still gives approx. 10 trillion possible games
         self.__maxSearchDepth = 5 
         # this is an arbitary value, size rounded up to the nearest 100 
-        self.__simDepth =  40 #(-(self.__size // -100))*100 # use 10 for tests
+        self.__simDepth =  40 
         
-        self.__iterations = 10000
+        self.__iterations = 2000000//81
 
     def __startTree(self,board):
         if self.__player == "x":
@@ -33,7 +33,6 @@ class MCTS():
 
         cpus = cpu_count()
         #print('Number of cpu\'s to process WM: %d' % cpus)
-        self.__measure.setCPUs(cpus)
         poolCount = cpus*2
 
         start = time.perf_counter_ns()
@@ -73,6 +72,8 @@ class MCTS():
         self.__measure.measureTree(self.__tree)
         self.__measure.setTime(stop - start)
         self.__measure.setScore(self.__tree.getScore())
+        self.__measure.setCPUs(cpus)
+        self.__measure.setNodes((self.__iterations*81)+1)
         
         #print(self.__tree.getScore(),self.__tree.getChildren()[0].getScore())
 
@@ -264,9 +265,9 @@ class GO():
         self.__file = FH.fileHandler() 
         self.__Xhuman = True
         self.__Ohuman = True
-        self.__stats = (0, 0, 0, 0, 0, 0)
+        self.__stats = (0, 0, 0, 0, 0, 0, 0)
         self.__data = []
-        self.__size = 19
+        self.__size = 9
         self.__init(self.__Xhuman, self.__Ohuman)
 
     def reset(self):

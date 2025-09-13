@@ -1,5 +1,5 @@
 import NandC as NC
-import GoMCTSV0_2 as GO
+import GoMCTSV1_0 as GO
 
 from tkinter import *
 from tkinter import filedialog
@@ -114,11 +114,14 @@ class stats():
         self.__modeLab = Label(self.__cont, text = f"mode:\n{self.__mode}", font = FONT, width = self.__width, height = self.__height)
         self.__modeLab.pack(side = TOP)
 
+        self.__cpus = 0
+        self.__cpusLab = Label(self.__cont, text = f"no. of CPUs:\n{self.__cpus}", font = FONT, width = self.__width, height = self.__height)
+        self.__cpusLab.pack(side = TOP)
 
     
     def proccess(self,stats):
         if stats != None:
-            self.__maxBreadth, self.__maxDepth, self.__numNodes, self.__time, self.__winProb, self.__mode = stats
+            self.__maxBreadth, self.__maxDepth, self.__numNodes, self.__time, self.__winProb, self.__mode, self.__cpus = stats
             self.__numNodesLab.configure(text = f"number of nodes:\n{self.__numNodes}")
             self.__winProbLab.configure(text = f"last minimax score:\n{self.__winProb}")
             self.__maxDepthLab.configure(text = f"max search depth:\n{self.__maxDepth}")
@@ -126,6 +129,7 @@ class stats():
             self.__timeLab.configure(text = f"time taken:\n{self.__time/1000000000} (s)")
             self.__effiLab.configure(text = f"time per loop:\n{self.__time/(self.__numNodes*1000+0.01)}")
             self.__modeLab.configure(text = f"mode:\n{self.__mode}")
+            self.__cpusLab.configure(text = f"no. of CPUs:\n{self.__cpus}")
             
     def setNumNodes(self,val):
         self.__numNodes = val
@@ -256,9 +260,9 @@ class goBoard():
             self.__width = 40
             self.__cont.configure(padx = 15)
 
-        self.__blank = PhotoImage(file = f"images\\goBlank{self.__width}.png")
-        self.__white = PhotoImage(file = f"images\\goWhite{self.__width}.png")
-        self.__black = PhotoImage(file = f"images\\goBlack{self.__width}.png")
+        self.__blank = PhotoImage(file = f"goBlank{self.__width}.png")
+        self.__white = PhotoImage(file = f"goWhite{self.__width}.png")
+        self.__black = PhotoImage(file = f"goBlack{self.__width}.png")
 
         self.__displayBoard = [[Button(self.__cont, image = self.__blank, highlightthickness = 0, bd = 0) for x in range(self.__size)] for y in range(self.__size)]
 
@@ -332,9 +336,9 @@ class NCBoard():
         self.__cont = Frame(parent, padx = 180)
         self.__cont.pack()
 
-        self.__blank = PhotoImage(file = "images\\blank.png")
-        self.__cross = PhotoImage(file = "images\\cross.png")
-        self.__naught = PhotoImage(file = "images\\naught.png")
+        self.__blank = PhotoImage(file = "blank.png")
+        self.__cross = PhotoImage(file = "cross.png")
+        self.__naught = PhotoImage(file = "naught.png")
         
         self.__board = NC.NandC()
 

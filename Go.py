@@ -258,29 +258,6 @@ class tile():
         bValue = self.getBottom(board)
         lValue = self.getLeft(board)
         return tValue,rValue,bValue,lValue
-
-    # def isAlive(self,board):
-    #     try:
-    #         if board[self.right].center.value != (self.center.getInverse()):
-    #             return True
-    #     except:
-    #         pass
-    #     try:
-    #         if board[self.left].center.value != (self.center.getInverse()):
-    #             return True 
-    #     except:
-    #         pass
-    #     try:
-    #         if board[self.top].center.value != (self.center.getInverse()):
-    #             return True
-    #     except:
-    #         pass
-    #     try:
-    #         if board[self.bottom].center.value != (self.center.getInverse()):
-    #             return True
-    #     except:
-    #         pass
-    #     return False
     
     def isAlive(self,board):
         if self.right != "f" and board[self.right].center.value != (self.center.getInverse()):
